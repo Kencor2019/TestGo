@@ -13,7 +13,7 @@ public class EmitionScript : ScriptableObject
     private int municao;
 
     // Start is called before the first frame update
-    public void Start()
+    public GameObject[] Start()
     {
         municao = 0;
         bala = new GameObject[municaoMax];
@@ -22,6 +22,8 @@ public class EmitionScript : ScriptableObject
             bala[i] = Instantiate(balaOrigem);
             bala[i].SetActive(false);
         }
+
+        return bala;
     }
 
     public GameObject instanciar()
