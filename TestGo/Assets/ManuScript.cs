@@ -55,15 +55,4 @@ public class MenuScript : MonoBehaviour
         return true;
 
     }
-
-    public void playButton()
-    {
-        Camera.DontDestroyOnLoad(this);
-        foreach (GameObject bullet in olhoBizarro.getBalas())
-        {
-            Camera.DontDestroyOnLoad(bullet);
-        }
-        //preguiça de fazer um especifico pra isso mas acho q vo fzr dps(botão pra cmcr o jogo o.O)
-            SceneManager.LoadSceneAsync("GameScene");
-    }
 }
