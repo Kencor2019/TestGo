@@ -11,10 +11,12 @@ public class GeneralScript : MonoBehaviour
     [SerializeField] private GameObject loadingScreen;
     [SerializeField] private GameObject techTree;
     [SerializeField] private GameObject _pauseScreen;
+    public static GeneralScript general;
 
     void Start()
     {
-        Camera.DontDestroyOnLoad(_Canvas);
+        general = this;
+        //Camera.DontDestroyOnLoad(_Canvas);
         Camera.DontDestroyOnLoad(this);
     }
 

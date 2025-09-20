@@ -55,4 +55,9 @@ public class MenuScript : MonoBehaviour
         return true;
 
     }
+
+    public void generalChangeScene(string sss)
+    {
+        GeneralScript.general.changeScene(sss);
+    }
 }
