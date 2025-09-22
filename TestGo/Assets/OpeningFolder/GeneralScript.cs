@@ -37,6 +37,11 @@ public class GeneralScript : MonoBehaviour
             Debug.Log(progresso);
             yield return null;
         }
-        
+
     }
+}
+
+public static class techTreee
+{
+    
 }
