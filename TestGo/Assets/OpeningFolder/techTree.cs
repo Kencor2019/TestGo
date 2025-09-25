@@ -9,6 +9,7 @@ public class TechTree : MonoBehaviour
 
     public List<techNode> nodes = new List<techNode>();
     [SerializeField] private GameObject butao;
+    [SerializeField] private GameObject canva;
     private GameObject arvorizador;
 
 
@@ -20,28 +21,47 @@ public class TechTree : MonoBehaviour
 
         arvorizador = Instantiate(butao);
         arvorizador.GetComponentInChildren<TextMeshProUGUI>().SetText("opa");
+        int count = 0, count2 = 0, count3 = 0;
+        Vector3 position = new Vector3(0, 0, 0);
 
         foreach (techNode op in nodes)
         {
             if (op.getParent() != null) continue;
-           
-            GameObject obrigado = Instantiate(butao);
+
+            GameObject obrigado = Instantiate(butao, position, Quaternion.identity, canva.transform);
             obrigado.GetComponentInChildren<TextMeshProUGUI>().SetText(op.getName());
 
             foreach (techNode opp in op.getKids())
             {
-                GameObject desobrigado = Instantiate(butao, obrigado.transform);
+                position = new Vector3(Mathf.Cos(count3 * (Mathf.PI * 2 / 3)),
+                        Mathf.Sin(count3 * (Mathf.PI * 2 / 3)), 0);
+
+                GameObject desobrigado = Instantiate(butao, position * 2 * 2, Quaternion.identity, obrigado.transform);
                 desobrigado.GetComponentInChildren<TextMeshProUGUI>().SetText(opp.getName());
+                
+                count3++;
 
                 foreach (techNode oppp in opp.getKids())
                 {
-                    GameObject final = Instantiate(butao, desobrigado.transform);
+                    position = new Vector3(Mathf.Cos(count2 * (Mathf.PI * 2 / 9)),
+                        Mathf.Sin(count2 * (Mathf.PI * 2 / 9)), 0);
+
+                    GameObject final = Instantiate(butao, position * 3 * 3, Quaternion.identity, desobrigado.transform);
                     final.GetComponentInChildren<TextMeshProUGUI>().SetText(oppp.getName());
-                   
+
+                    count2++;
+
+
                     foreach (techNode opppp in oppp.getKids())
                     {
-                        GameObject daaa = Instantiate(butao, final.transform);
+                        position = new Vector3(Mathf.Cos(count * (Mathf.PI * 2 / 18)),
+                        Mathf.Sin(count * (Mathf.PI * 2 / 18)), 0);
+
+                        GameObject daaa = Instantiate(butao, position * 4 * 4, Quaternion.identity, final.transform);
                         daaa.GetComponentInChildren<TextMeshProUGUI>().SetText(opppp.getName());
+
+                        count++;
+
 
                     }
                 }
@@ -162,7 +182,7 @@ public class TechTree : MonoBehaviour
         {
             nodes.Add(_nodes[i]);
         }
-       
+        
     }
 
     List<techNode> getnodes(int op, int op2, techNode[] reference)
@@ -180,14 +200,14 @@ public class TechTree : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-       
+        
     }
 }
 
 
 
 
-public class techNode
+public class techNode 
 {
     [SerializeField]private string name;
     [SerializeField]private string tipe;
@@ -215,7 +235,7 @@ public class techNode
     public void setName(string setter) {
         name = setter;
     }
-   
+    
     //tipe get set
     public void setTipe(string setter) {
         tipe = setter;
@@ -229,7 +249,7 @@ public class techNode
     public void setId(int setter) {
         nodeid = setter;
     }
-   
+    
     public int getId() {
         return nodeid;
     }
@@ -238,7 +258,7 @@ public class techNode
     public List<techNode> getParent() {
         return parents;
     }
-   
+    
     public void setParents(List<techNode> setter)
     {
         parents = setter;
