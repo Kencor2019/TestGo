@@ -36,7 +36,7 @@ public class TechTree : MonoBehaviour
                 position = new Vector3(Mathf.Cos(count3 * (Mathf.PI * 2 / 3)),
                         Mathf.Sin(count3 * (Mathf.PI * 2 / 3)), 0);
 
-                GameObject desobrigado = Instantiate(butao, position * 2 * 2, Quaternion.identity, obrigado.transform);
+                GameObject desobrigado = Instantiate(butao, position * 2, Quaternion.identity, obrigado.transform);
                 desobrigado.GetComponentInChildren<TextMeshProUGUI>().SetText(opp.getName());
                 
                 count3++;
@@ -46,7 +46,7 @@ public class TechTree : MonoBehaviour
                     position = new Vector3(Mathf.Cos(count2 * (Mathf.PI * 2 / 9)),
                         Mathf.Sin(count2 * (Mathf.PI * 2 / 9)), 0);
 
-                    GameObject final = Instantiate(butao, position * 3 * 3, Quaternion.identity, desobrigado.transform);
+                    GameObject final = Instantiate(butao, position * 3, Quaternion.identity, desobrigado.transform);
                     final.GetComponentInChildren<TextMeshProUGUI>().SetText(oppp.getName());
 
                     count2++;
@@ -57,7 +57,7 @@ public class TechTree : MonoBehaviour
                         position = new Vector3(Mathf.Cos(count * (Mathf.PI * 2 / 18)),
                         Mathf.Sin(count * (Mathf.PI * 2 / 18)), 0);
 
-                        GameObject daaa = Instantiate(butao, position * 4 * 4, Quaternion.identity, final.transform);
+                        GameObject daaa = Instantiate(butao, position * 4, Quaternion.identity, final.transform);
                         daaa.GetComponentInChildren<TextMeshProUGUI>().SetText(opppp.getName());
 
                         count++;
