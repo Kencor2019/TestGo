@@ -1,6 +1,8 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System;
+using System.Threading.Tasks;
 
 public class WorldGridScript : MonoBehaviour
 {
@@ -12,12 +14,15 @@ public class WorldGridScript : MonoBehaviour
         startMap();   
     }
 
-    void startMap()
+    async Task startMap()
     {
         _world = new Color[(int)worldSize.x * (int)worldSize.y];
 
-        //prepara as cores pro mapa
-        getNoise();
+        await Task.Run(() =>
+        {
+            //prepara as cores pro mapa
+            getNoise();
+        });
 
         //textura q vai receber cada pixel do mapa (ela recebendo e depois o apply)
         Texture2D _texture = new Texture2D((int)worldSize.x, (int)worldSize.y, TextureFormat.RGBA32, false);
@@ -57,27 +62,33 @@ public class WorldGridScript : MonoBehaviour
                 if (diggo > 0.7f)
                 {
                     _world[i * (int)worldSize.y + d] = new Color(1f, 0.937255f, 0.8352942f, 1f);
-                } else
+                }
+                else
                 //pontos meio altos = marrom
                 if (diggo > 0.65f)
                 {
                     _world[i * (int)worldSize.y + d] = new Color(0.9568628f, 0.6431373f, 0.3764706f, 1f);
-                } else
+                }
+                else
                 //terreno normal = verde
                 if (diggo > 0.40f)
                 {
                     _world[i * (int)worldSize.y + d] = new Color(0.5960785f, 0.9843138f, 0.5960785f, 1f);
-                } else
+                }
+                else
                 //terreno baixo = amarelo
                 if (diggo > 0.37f)
                 {
                     _world[i * (int)worldSize.y + d] = new Color(0.9333334f, 0.909804f, 0.6666667f, 1f);
-                } else
+                }
+                else
                 //terreno megabaixo = azul
                 if (diggo > 0.01f)
                 {
                     _world[i * (int)worldSize.y + d] = new Color(0.5294118f, 0.8078432f, 0.9215687f, 1f);
                 }
+
+
             }
         }
     }
