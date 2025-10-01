@@ -6,18 +6,63 @@ using System.Threading.Tasks;
 
 public class WorldGridScript : MonoBehaviour
 {
-    [SerializeField]private Vector3 worldSize;
-    private Color[] _world;
+    [Header("Tem Rio?")]
+    [SerializeField] private bool rioExist;
+
+    [Header("Chances")]
+    [SerializeField] private float chanceBiomas;       //a partir do 0.2
+    [SerializeField] private float chanceMinerio;       //a partir do 0.82
+    [SerializeField] private float chanceParede;        //a partir do 0.67
+    [SerializeField] private float chanceFlor;          //a partir do 0.43
+    [SerializeField] private float chanceRio;           //a partir do 0.09
+
+    [Header("Tamanhos")]
+    [SerializeField] private Vector3 worldSize;
+    [SerializeField] private int pixelSize;
+    private List<int> biomas;
+    private List<int> _rio;
+    private float[] _world;
+    private Color[] _worldPixels;
+
+
+    /*
+    Enumerator Comentado o.O
+    100 minerio 1;
+    101 minerio 2;
+    ...
+    109 minerio 9;
+    200 flor 1;
+    ...
+    203 flor 3;
+    300 parede 1;
+    ...
+    304 parede 4;
+    */
     // Start is called before the first frame update
     void Start()
     {
-        startMap();   
+        startMap();
     }
 
     async Task startMap()
     {
-        _world = new Color[(int)worldSize.x * (int)worldSize.y];
+        //inicializa as variaveis do mundo
+        _world = new float[(int)worldSize.x * (int)worldSize.y];
+        _worldPixels = new Color[(int)worldSize.x * (int)worldSize.y * pixelSize * pixelSize];
+        biomas = new List<int>();
+        //_rio = null;
 
+        //caso tenha rio
+        if (rioExist)
+        {
+            Debug.Log("claro");
+            _rio = new List<int>();
+            _rio.Add(0); //iniciamos um valor inicial pro rio para auxiliar depois
+        }
+        float _random = UnityEngine.Random.Range(0.0f, 1f);
+        Debug.Log(_random);
+
+        //abre uma thread pra fazer os calculos do mundo
         await Task.Run(() =>
         {
             //prepara as cores pro mapa
@@ -34,7 +79,7 @@ public class WorldGridScript : MonoBehaviour
         _texture.wrapMode = TextureWrapMode.Clamp;
 
         //Recebe os pixels e da o apply
-        _texture.SetPixels(0, 0, (int)worldSize.x, (int)worldSize.y, _world);
+        _texture.SetPixels(0, 0, (int)worldSize.x, (int)worldSize.y, _worldPixels);
 
         _texture.Apply();
 
@@ -45,6 +90,56 @@ public class WorldGridScript : MonoBehaviour
 
     void getNoise()
     {
+        Debug.Log("passo0");
+
+        if (_rio != null)
+        {
+            Debug.Log("passo1");
+            getRio();
+        }
+
+        Debug.Log("Fizemos um belo rio(de 2 pontos por enquanto)");
+
+        for (int i = 0; i < worldSize.x; i++)
+        {
+            for (int d = 0; d < worldSize.y; d++)
+            {
+                float _random = UnityEngine.Random.Range(0.0f, 1f);
+
+                //adcionamos os pontos onde o rio vai fluir
+                if (0.09f < _random && _random < 0.09f + chanceRio && rioExist)
+                {
+                    //se o primeiro ponto tiver nascido e este estiver muito perto não vamos ignorar
+                    if (_rio[0] != 0 && Vector2.Distance(new Vector2(_rio[0] % (int)worldSize.y, Mathf.Floor(_rio[0] / (int)worldSize.x)),
+                     new Vector2(i, d)) < worldSize.x / 3) continue;
+
+                    _rio.Add(i * (int)worldSize.y + d);
+                    Debug.Log("Rio grande da zorra");
+                }
+
+                if (0.20f < _random && _random < 0.20f + chanceBiomas)
+                {
+                    Debug.Log("Bioma adiconado slk");
+                    biomas.Add(i * (int)worldSize.y + d);
+                }
+
+                if (0.82f < _random && _random < 0.82f + chanceMinerio)
+                {
+                    _world[i * (int)worldSize.y + d] = 100;
+                }
+
+                if (0.67f < _random && _random < 0.67f + chanceParede)
+                {
+                    _world[i * (int)worldSize.y + d] = 100;
+                }
+
+                if (0.43f < _random && _random < 0.43f + chanceFlor)
+                {
+                    _world[i * (int)worldSize.y + d] = 100;
+                }
+            }
+        }
+
         for (int i = 0; i < worldSize.x; i++)
         {
             for (int d = 0; d < worldSize.y; d++)
@@ -54,48 +149,141 @@ public class WorldGridScript : MonoBehaviour
 
                 float diggo = Mathf.PerlinNoise(xCoord, yCoord);
 
-                Debug.Log(_world.Length + " : " + diggo);
+                Debug.Log(_worldPixels.Length + " : " + (_world[i * (int)worldSize.y + d] + diggo));
 
-                _world[i * (int)worldSize.y + d] = new Color(0.7411765f, 0.7176471f, 0.4196079f, 1f);
+                _worldPixels[i * (int)worldSize.y + d] = new Color(0.7411765f, 0.7176471f, 0.4196079f, 1f);
 
                 //pontos altos = branco
                 if (diggo > 0.7f)
                 {
-                    _world[i * (int)worldSize.y + d] = new Color(1f, 0.937255f, 0.8352942f, 1f);
+                    _worldPixels[i * (int)worldSize.y + d] = new Color(1f, 0.937255f, 0.8352942f, 1f);
                 }
                 else
                 //pontos meio altos = marrom
                 if (diggo > 0.65f)
                 {
-                    _world[i * (int)worldSize.y + d] = new Color(0.9568628f, 0.6431373f, 0.3764706f, 1f);
+                    _worldPixels[i * (int)worldSize.y + d] = new Color(0.9568628f, 0.6431373f, 0.3764706f, 1f);
                 }
                 else
                 //terreno normal = verde
                 if (diggo > 0.40f)
                 {
-                    _world[i * (int)worldSize.y + d] = new Color(0.5960785f, 0.9843138f, 0.5960785f, 1f);
+                    _worldPixels[i * (int)worldSize.y + d] = new Color(0.5960785f, 0.9843138f, 0.5960785f, 1f);
                 }
                 else
                 //terreno baixo = amarelo
                 if (diggo > 0.37f)
                 {
-                    _world[i * (int)worldSize.y + d] = new Color(0.9333334f, 0.909804f, 0.6666667f, 1f);
+                    _worldPixels[i * (int)worldSize.y + d] = new Color(0.9333334f, 0.909804f, 0.6666667f, 1f);
                 }
                 else
                 //terreno megabaixo = azul
                 if (diggo > 0.01f)
                 {
-                    _world[i * (int)worldSize.y + d] = new Color(0.5294118f, 0.8078432f, 0.9215687f, 1f);
+                    _worldPixels[i * (int)worldSize.y + d] = new Color(0.5294118f, 0.8078432f, 0.9215687f, 1f);
                 }
 
 
             }
         }
+
+        if (rioExist)
+        {
+            //reordena o rio para o fluxo do rio(a lista que armazena o fluxo) seguir de forma linear
+            int ordenaRio = _rio[1];
+            for (int i = 1; i < _rio.Count - 1; i++)
+            {
+                _rio[i] = _rio[i + 1];
+            }
+            _rio[_rio.Count - 1] = ordenaRio;
+        }
+    }
+
+    void getRio()
+    {
+        //adcionamos os pontos onde o rio vai começar e acabar
+        float _random = 0;
+
+        Debug.Log("Vamo Começar : " + _rio.Count);
+ 
+        for (int i = 1; i < worldSize.x - 1; i++)
+        {
+            if (_rio.Count >= 2) { return; }
+
+            _random = UnityEngine.Random.Range(0.0f, 1f);
+
+            Debug.Log(_random);
+
+            if (0.09f < _random && _random < 0.09f + chanceRio)
+            {
+                //se o primeiro ponto tiver nascido e este estiver muito perto não vamos ignorar
+                if (_rio[0] != 0 && Vector2.Distance(new Vector2(_rio[0] % (int)worldSize.y, Mathf.Floor(_rio[0] / (int)worldSize.x)),
+                 new Vector2(i % (int)worldSize.y, Mathf.Floor(i / (int)worldSize.x))) < worldSize.x / 3) continue;
+
+                _rio.Add(i);
+            }
+        }
+        for (int i = 1; i < worldSize.y - 1; i++)
+        {
+            if (_rio.Count >= 2) { return; }
+
+            _random = UnityEngine.Random.Range(0.0f, 1f);
+
+            if (0.09f < _random && _random < 0.09f + chanceRio)
+            {
+                //se o primeiro ponto tiver nascido e este estiver muito perto não vamos ignorar
+                if (_rio[0] != 0 && Vector2.Distance(new Vector2(_rio[0] % (int)worldSize.y, Mathf.Floor(_rio[0] / (int)worldSize.x)),
+                 new Vector2((i * (int)worldSize.y) % (int)worldSize.y, Mathf.Floor((i * (int)worldSize.y) / (int)worldSize.x))) < worldSize.x / 3) continue;
+
+                _rio.Add(i * (int)worldSize.x);
+            }
+        }
+        for (int i = 1; i < worldSize.y - 1; i++)
+        {
+            if (_rio.Count >= 2) { return; }
+
+            _random = UnityEngine.Random.Range(0.0f, 1f);
+
+            if (0.09f < _random && _random < 0.09f + chanceRio)
+            {
+                //se o primeiro ponto tiver nascido e este estiver muito perto não vamos ignorar
+                if (_rio[0] != 0 && Vector2.Distance(new Vector2(_rio[0] % (int)worldSize.y, Mathf.Floor(_rio[0] / (int)worldSize.x)),
+                 new Vector2(((i + 1) * (int)worldSize.y - 1) % (int)worldSize.y, Mathf.Floor(i * (int)worldSize.y / (int)worldSize.x))) < worldSize.x / 3) continue;
+
+                _rio.Add(((i + 1) * (int)worldSize.x - 1));
+            }
+        }
+        for (int i = 1; i < worldSize.x - 1; i++)
+        {
+            if (_rio.Count >= 2) { return; }
+
+            _random = UnityEngine.Random.Range(0.0f, 1f);
+
+            if (0.09f < _random && _random < 0.09f + chanceRio)
+            {
+                //se o primeiro ponto tiver nascido e este estiver muito perto não vamos ignorar
+                if (_rio[0] != 0 && Vector2.Distance(new Vector2(_rio[0] % (int)worldSize.y, Mathf.Floor(_rio[0] / (int)worldSize.x)),
+                 new Vector2((i + ((int)worldSize.x - 1) * (int)worldSize.y) % (int)worldSize.y, Mathf.Floor((i + ((int)worldSize.x - 1) * (int)worldSize.y) / (int)worldSize.x))) < worldSize.x / 3) continue;
+
+                _rio.Add((i + ((int)worldSize.x - 1) * (int)worldSize.y));
+            }
+        }
+
+        //caso não tenha ido vamos chamar denovo
+        if (_rio.Count < 2)
+        {
+            Debug.Log("Pra criar o rio eu fui chamado denovo");
+            getRio();
+        }
+
     }
 
     // Update is called once per frame
     void Update()
     {
-        
+
     }
 }
+
+
+
