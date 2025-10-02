@@ -306,11 +306,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   rioExist: 1
-  chanceBiomas: 0.003
+  chanceBiomas: 0.00003
   chanceMinerio: 0.09
   chanceParede: 0.09
   chanceFlor: 0.07
-  chanceRio: 0.01
+  chanceRio: 0.003
   worldSize: {x: 300, y: 300, z: 0}
   pixelSize: 1
 --- !u!212 &592665430

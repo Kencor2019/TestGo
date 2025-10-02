@@ -24,7 +24,6 @@ public class WorldGridScript : MonoBehaviour
     private float[] _world;
     private Color[] _worldPixels;
 
-
     /*
     Enumerator Comentado o.O
     100 minerio 1;
@@ -50,17 +49,14 @@ public class WorldGridScript : MonoBehaviour
         _world = new float[(int)worldSize.x * (int)worldSize.y];
         _worldPixels = new Color[(int)worldSize.x * (int)worldSize.y * pixelSize * pixelSize];
         biomas = new List<int>();
-        //_rio = null;
+        _rio = null;
 
         //caso tenha rio
         if (rioExist)
         {
-            Debug.Log("claro");
             _rio = new List<int>();
             _rio.Add(0); //iniciamos um valor inicial pro rio para auxiliar depois
         }
-        float _random = UnityEngine.Random.Range(0.0f, 1f);
-        Debug.Log(_random);
 
         //abre uma thread pra fazer os calculos do mundo
         await Task.Run(() =>
@@ -90,55 +86,61 @@ public class WorldGridScript : MonoBehaviour
 
     void getNoise()
     {
-        Debug.Log("passo0");
 
         if (_rio != null)
         {
-            Debug.Log("passo1");
             getRio();
         }
 
-        Debug.Log("Fizemos um belo rio(de 2 pontos por enquanto)");
+        var _random = new System.Random();
+        float _randomValue = 0;
 
         for (int i = 0; i < worldSize.x; i++)
         {
             for (int d = 0; d < worldSize.y; d++)
             {
-                float _random = UnityEngine.Random.Range(0.0f, 1f);
+                _randomValue = (float)_random.NextDouble();
 
                 //adcionamos os pontos onde o rio vai fluir
-                if (0.09f < _random && _random < 0.09f + chanceRio && rioExist)
+                if (0.09f < _randomValue && _randomValue < 0.09f + chanceRio && rioExist)
                 {
-                    //se o primeiro ponto tiver nascido e este estiver muito perto não vamos ignorar
-                    if (_rio[0] != 0 && Vector2.Distance(new Vector2(_rio[0] % (int)worldSize.y, Mathf.Floor(_rio[0] / (int)worldSize.x)),
-                     new Vector2(i, d)) < worldSize.x / 3) continue;
+                    //se estiver muito perto vamos ignorar
+                    if (Vector3.Distance(new Vector3(Mathf.Floor(_rio[_rio.Count - 1] / (int)worldSize.y), _rio[_rio.Count - 1] % (int)worldSize.x),
+                     new Vector3(i, d)) < worldSize.x/1.1f) continue;
 
                     _rio.Add(i * (int)worldSize.y + d);
-                    Debug.Log("Rio grande da zorra");
+                    Debug.Log("rio+");
                 }
 
-                if (0.20f < _random && _random < 0.20f + chanceBiomas)
+                if (0.20f < _randomValue && _randomValue < 0.20f + chanceBiomas)
                 {
                     Debug.Log("Bioma adiconado slk");
                     biomas.Add(i * (int)worldSize.y + d);
                 }
 
-                if (0.82f < _random && _random < 0.82f + chanceMinerio)
+                if (0.82f < _randomValue && _randomValue < 0.82f + chanceMinerio)
                 {
                     _world[i * (int)worldSize.y + d] = 100;
                 }
 
-                if (0.67f < _random && _random < 0.67f + chanceParede)
+                if (0.67f < _randomValue && _randomValue < 0.67f + chanceParede)
                 {
-                    _world[i * (int)worldSize.y + d] = 100;
+                    _world[i * (int)worldSize.y + d] = 300;
                 }
 
-                if (0.43f < _random && _random < 0.43f + chanceFlor)
+                if (0.43f < _randomValue && _randomValue < 0.43f + chanceFlor)
                 {
-                    _world[i * (int)worldSize.y + d] = 100;
+                    _world[i * (int)worldSize.y + d] = 200;
                 }
             }
         }
+        
+        //Garante q tenha pelo menos 1 bioma
+        if (biomas.Count == 0)
+        {
+            biomas.Add((int)(worldSize.y/2)*(int)worldSize.x + (int)worldSize.x/2);
+        }
+
 
         for (int i = 0; i < worldSize.x; i++)
         {
@@ -149,7 +151,7 @@ public class WorldGridScript : MonoBehaviour
 
                 float diggo = Mathf.PerlinNoise(xCoord, yCoord);
 
-                Debug.Log(_worldPixels.Length + " : " + (_world[i * (int)worldSize.y + d] + diggo));
+                //Debug.Log(_worldPixels.Length + " : " + (_world[i * (int)worldSize.y + d] + diggo));
 
                 _worldPixels[i * (int)worldSize.y + d] = new Color(0.7411765f, 0.7176471f, 0.4196079f, 1f);
 
@@ -202,68 +204,65 @@ public class WorldGridScript : MonoBehaviour
     void getRio()
     {
         //adcionamos os pontos onde o rio vai começar e acabar
-        float _random = 0;
-
-        Debug.Log("Vamo Começar : " + _rio.Count);
+        var _random = new System.Random();
+        float _randomValue = 0;
  
-        for (int i = 1; i < worldSize.x - 1; i++)
+        for (int i = 1; i < (int)worldSize.x - 1; i++)
         {
             if (_rio.Count >= 2) { return; }
 
-            _random = UnityEngine.Random.Range(0.0f, 1f);
+            _randomValue = (float)_random.NextDouble();
 
-            Debug.Log(_random);
-
-            if (0.09f < _random && _random < 0.09f + chanceRio)
+            if (0.09f < _randomValue && _randomValue < 0.09f + chanceRio)
             {
                 //se o primeiro ponto tiver nascido e este estiver muito perto não vamos ignorar
-                if (_rio[0] != 0 && Vector2.Distance(new Vector2(_rio[0] % (int)worldSize.y, Mathf.Floor(_rio[0] / (int)worldSize.x)),
-                 new Vector2(i % (int)worldSize.y, Mathf.Floor(i / (int)worldSize.x))) < worldSize.x / 3) continue;
+                if (_rio[0] != 0 && Vector3.Distance(new Vector3(_rio[0] % (int)worldSize.y, Mathf.Floor(_rio[0] / (int)worldSize.x)),
+                 new Vector3(i % (int)worldSize.y, Mathf.Floor(i / (int)worldSize.x))) < worldSize.x / 3) continue;
 
                 _rio.Add(i);
             }
         }
-        for (int i = 1; i < worldSize.y - 1; i++)
+        for (int i = 1; i < (int)worldSize.y - 1; i++)
         {
             if (_rio.Count >= 2) { return; }
 
-            _random = UnityEngine.Random.Range(0.0f, 1f);
+            _randomValue = (float)_random.NextDouble();
 
-            if (0.09f < _random && _random < 0.09f + chanceRio)
+            if (0.09f < _randomValue && _randomValue < 0.09f + chanceRio)
             {
                 //se o primeiro ponto tiver nascido e este estiver muito perto não vamos ignorar
-                if (_rio[0] != 0 && Vector2.Distance(new Vector2(_rio[0] % (int)worldSize.y, Mathf.Floor(_rio[0] / (int)worldSize.x)),
-                 new Vector2((i * (int)worldSize.y) % (int)worldSize.y, Mathf.Floor((i * (int)worldSize.y) / (int)worldSize.x))) < worldSize.x / 3) continue;
+                if (_rio[0] != 0 && Vector3.Distance(new Vector3(_rio[0] % (int)worldSize.y, Mathf.Floor(_rio[0] / (int)worldSize.x)),
+                 new Vector3((i * (int)worldSize.y) % (int)worldSize.y, Mathf.Floor((i * (int)worldSize.y) / (int)worldSize.x))) < worldSize.x / 3) continue;
 
                 _rio.Add(i * (int)worldSize.x);
             }
         }
-        for (int i = 1; i < worldSize.y - 1; i++)
+        for (int i = 1; i < (int)worldSize.y - 1; i++)
         {
             if (_rio.Count >= 2) { return; }
 
-            _random = UnityEngine.Random.Range(0.0f, 1f);
+            _randomValue = (float)_random.NextDouble();
 
-            if (0.09f < _random && _random < 0.09f + chanceRio)
+            if (0.09f < _randomValue && _randomValue < 0.09f + chanceRio)
             {
                 //se o primeiro ponto tiver nascido e este estiver muito perto não vamos ignorar
-                if (_rio[0] != 0 && Vector2.Distance(new Vector2(_rio[0] % (int)worldSize.y, Mathf.Floor(_rio[0] / (int)worldSize.x)),
-                 new Vector2(((i + 1) * (int)worldSize.y - 1) % (int)worldSize.y, Mathf.Floor(i * (int)worldSize.y / (int)worldSize.x))) < worldSize.x / 3) continue;
+                if (_rio[0] != 0 && Vector3.Distance(new Vector3(_rio[0] % (int)worldSize.y, Mathf.Floor(_rio[0] / (int)worldSize.x)),
+                 new Vector3(((i + 1) * (int)worldSize.y - 1) % (int)worldSize.y, Mathf.Floor(i * (int)worldSize.y / (int)worldSize.x))) < worldSize.x / 3) continue;
 
                 _rio.Add(((i + 1) * (int)worldSize.x - 1));
             }
         }
-        for (int i = 1; i < worldSize.x - 1; i++)
+        for (int i = 1; i < (int)worldSize.x - 1; i++)
         {
             if (_rio.Count >= 2) { return; }
 
-            _random = UnityEngine.Random.Range(0.0f, 1f);
+            _randomValue = (float)_random.NextDouble();
 
-            if (0.09f < _random && _random < 0.09f + chanceRio)
+            if (0.09f < _randomValue && _randomValue < 0.09f + chanceRio)
             {
                 //se o primeiro ponto tiver nascido e este estiver muito perto não vamos ignorar
-                if (_rio[0] != 0 && Vector2.Distance(new Vector2(_rio[0] % (int)worldSize.y, Mathf.Floor(_rio[0] / (int)worldSize.x)),
-                 new Vector2((i + ((int)worldSize.x - 1) * (int)worldSize.y) % (int)worldSize.y, Mathf.Floor((i + ((int)worldSize.x - 1) * (int)worldSize.y) / (int)worldSize.x))) < worldSize.x / 3) continue;
+                if (_rio[0] != 0 && Vector3.Distance(new Vector3(_rio[0] % (int)worldSize.y, Mathf.Floor(_rio[0] / (int)worldSize.x)),
+                 new Vector3((i + ((int)worldSize.x - 1) * (int)worldSize.y) % (int)worldSize.y, Mathf.Floor((i + ((int)worldSize.x - 1) * (int)worldSize.y) / (int)worldSize.x))) < worldSize.x / 3) continue;
 
                 _rio.Add((i + ((int)worldSize.x - 1) * (int)worldSize.y));
             }
