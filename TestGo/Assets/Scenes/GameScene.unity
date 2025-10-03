@@ -305,14 +305,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9776dccc677ff374eb75c95ecd24a14c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _sprites:
+  - {fileID: 21300000, guid: 1af4e8a2796a2db40b9796b7ad1ef1a6, type: 3}
+  - {fileID: 21300000, guid: 3bd386f0c788a8d469bf47ed6b5ef065, type: 3}
+  - {fileID: 21300000, guid: 233c69a126e357e4ea65d7c350bf6357, type: 3}
+  - {fileID: 21300000, guid: c63be5d679dbdb240b44b9fd05cc795c, type: 3}
   rioExist: 1
+  numBiomas: 1
   chanceBiomas: 0.00003
   chanceMinerio: 0.09
   chanceParede: 0.09
   chanceFlor: 0.07
   chanceRio: 0.003
-  worldSize: {x: 300, y: 300, z: 0}
-  pixelSize: 1
+  worldSize: {x: 100, y: 100, z: 0}
+  pixelSize: 16
 --- !u!212 &592665430
 SpriteRenderer:
   m_ObjectHideFlags: 0

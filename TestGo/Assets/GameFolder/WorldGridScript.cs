@@ -6,8 +6,13 @@ using System.Threading.Tasks;
 
 public class WorldGridScript : MonoBehaviour
 {
-    [Header("Tem Rio?")]
+    [Header("Sprites")]
+    [SerializeField] private Sprite[] _sprites; 
+    [SerializeField] private Color[][][] sprites; 
+
+    [Header("Info")]
     [SerializeField] private bool rioExist;
+    [SerializeField] private int numBiomas;
 
     [Header("Chances")]
     [SerializeField] private float chanceBiomas;       //a partir do 0.2
@@ -21,11 +26,14 @@ public class WorldGridScript : MonoBehaviour
     [SerializeField] private int pixelSize;
     private List<int> biomas;
     private List<int> _rio;
-    private float[] _world;
+    private int[] _world;
     private Color[] _worldPixels;
 
     /*
     Enumerator Comentado o.O
+    1 bioma1;
+    ...
+    5 bioma5;
     100 minerio 1;
     101 minerio 2;
     ...
@@ -40,13 +48,14 @@ public class WorldGridScript : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        loadSprites();
         startMap();
     }
 
     async Task startMap()
     {
         //inicializa as variaveis do mundo
-        _world = new float[(int)worldSize.x * (int)worldSize.y];
+        _world = new int[(int)worldSize.x * (int)worldSize.y];
         _worldPixels = new Color[(int)worldSize.x * (int)worldSize.y * pixelSize * pixelSize];
         biomas = new List<int>();
         _rio = null;
@@ -61,26 +70,32 @@ public class WorldGridScript : MonoBehaviour
         //abre uma thread pra fazer os calculos do mundo
         await Task.Run(() =>
         {
-            //prepara as cores pro mapa
-            getNoise();
+            try
+            {
+                getNoise();
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"Erro dentro da Task: {ex}");
+            }
         });
 
         //textura q vai receber cada pixel do mapa (ela recebendo e depois o apply)
-        Texture2D _texture = new Texture2D((int)worldSize.x, (int)worldSize.y, TextureFormat.RGBA32, false);
+        Texture2D _texture = new Texture2D((int)worldSize.x * pixelSize, (int)worldSize.y * pixelSize, TextureFormat.RGBA32, false);
 
         // Desliga o filtro bilinear (usa point filtering)
-        _texture.filterMode = FilterMode.Point;
+        //_texture.filterMode = FilterMode.Point;
 
         // Opcional: evita wrap (repetição da textura)
         _texture.wrapMode = TextureWrapMode.Clamp;
 
         //Recebe os pixels e da o apply
-        _texture.SetPixels(0, 0, (int)worldSize.x, (int)worldSize.y, _worldPixels);
+        _texture.SetPixels(0, 0, (int)worldSize.x * pixelSize, (int)worldSize.y * pixelSize, _worldPixels);
 
         _texture.Apply();
 
         //o sprite pra rendereziar nossa textura q é o nosso mapa
-        Sprite spr = Sprite.Create(_texture, new Rect(0.0f, 0.0f, _texture.width, _texture.height), Vector2.zero, 1f);
+        Sprite spr = Sprite.Create(_texture, new Rect(0.0f, 0.0f, _texture.width, _texture.height), Vector2.zero, 16f);
         this.GetComponent<SpriteRenderer>().sprite = spr;
     }
 
@@ -99,6 +114,13 @@ public class WorldGridScript : MonoBehaviour
         {
             for (int d = 0; d < worldSize.y; d++)
             {
+                //bordas de paredes
+                if (i == 0 || d == 0 || i == worldSize.x - 1 || d == worldSize.y - 1)
+                {
+                    _world[d * (int)worldSize.x + i] = 300;
+                    continue;
+                }
+
                 _randomValue = (float)_random.NextDouble();
 
                 //adcionamos os pontos onde o rio vai fluir
@@ -106,31 +128,32 @@ public class WorldGridScript : MonoBehaviour
                 {
                     //se estiver muito perto vamos ignorar
                     if (Vector3.Distance(new Vector3(Mathf.Floor(_rio[_rio.Count - 1] / (int)worldSize.y), _rio[_rio.Count - 1] % (int)worldSize.x),
-                     new Vector3(i, d)) < worldSize.x/1.1f) continue;
+                     new Vector3(i, d)) < (worldSize.x + worldSize.y)/2/1.1f) continue;
 
-                    _rio.Add(i * (int)worldSize.y + d);
+                    _rio.Add(d * (int)worldSize.x + i);
                     Debug.Log("rio+");
                 }
 
                 if (0.20f < _randomValue && _randomValue < 0.20f + chanceBiomas)
                 {
                     Debug.Log("Bioma adiconado slk");
-                    biomas.Add(i * (int)worldSize.y + d);
+                    biomas.Add(d * (int)worldSize.x + i);
+                    _world[d * (int)worldSize.x + i] = 1;
                 }
 
                 if (0.82f < _randomValue && _randomValue < 0.82f + chanceMinerio)
                 {
-                    _world[i * (int)worldSize.y + d] = 100;
+                    _world[d * (int)worldSize.x + i] = 100;
                 }
 
                 if (0.67f < _randomValue && _randomValue < 0.67f + chanceParede)
                 {
-                    _world[i * (int)worldSize.y + d] = 300;
+                    _world[d * (int)worldSize.x + i] = 300;
                 }
 
                 if (0.43f < _randomValue && _randomValue < 0.43f + chanceFlor)
                 {
-                    _world[i * (int)worldSize.y + d] = 200;
+                    _world[d * (int)worldSize.x + i] = 200;
                 }
             }
         }
@@ -146,45 +169,111 @@ public class WorldGridScript : MonoBehaviour
         {
             for (int d = 0; d < worldSize.y; d++)
             {
-                float xCoord = ((float)i / 250f) * 5;
-                float yCoord = ((float)d / 250f) * 5;
+                //squareBioma guarda a posição do bioma mais proximo do nosso quadrado
+                int squareBioma = biomas[0];   
+                foreach (int bioma in biomas)
+                {
+                    if (Vector3.Distance(new Vector3(Mathf.Floor(bioma / (int)worldSize.y), bioma % (int)worldSize.x),
+                     new Vector3(i, d)) < Vector3.Distance(new Vector3(Mathf.Floor(squareBioma / (int)worldSize.y), squareBioma % (int)worldSize.x),
+                     new Vector3(i, d))) squareBioma = bioma;
+                }
+
+                float xCoord = ((float)i / 250f) * 18;
+                float yCoord = ((float)d / 250f) * 18;
 
                 float diggo = Mathf.PerlinNoise(xCoord, yCoord);
 
-                //Debug.Log(_worldPixels.Length + " : " + (_world[i * (int)worldSize.y + d] + diggo));
+                //Debug.Log(_worldPixels.Length + " : " + (_world[d * (int)worldSize.x + i] + diggo));
 
-                _worldPixels[i * (int)worldSize.y + d] = new Color(0.7411765f, 0.7176471f, 0.4196079f, 1f);
-
-                //pontos altos = branco
-                if (diggo > 0.7f)
+                /*
+                //encaixando 16 pixel por linha em cada j linha(16 linhas)
+                //(essa linha ficou de inutil acho)_worldPixels[d * (int)worldSize.x + i] = sprites[_world[squareBioma]][0].getPixels;
+                for (int j = 0; j < 16; j++)
                 {
-                    _worldPixels[i * (int)worldSize.y + d] = new Color(1f, 0.937255f, 0.8352942f, 1f);
-                }
-                else
-                //pontos meio altos = marrom
-                if (diggo > 0.65f)
-                {
-                    _worldPixels[i * (int)worldSize.y + d] = new Color(0.9568628f, 0.6431373f, 0.3764706f, 1f);
-                }
-                else
-                //terreno normal = verde
-                if (diggo > 0.40f)
-                {
-                    _worldPixels[i * (int)worldSize.y + d] = new Color(0.5960785f, 0.9843138f, 0.5960785f, 1f);
-                }
-                else
-                //terreno baixo = amarelo
-                if (diggo > 0.37f)
-                {
-                    _worldPixels[i * (int)worldSize.y + d] = new Color(0.9333334f, 0.909804f, 0.6666667f, 1f);
-                }
-                else
-                //terreno megabaixo = azul
-                if (diggo > 0.01f)
-                {
-                    _worldPixels[i * (int)worldSize.y + d] = new Color(0.5294118f, 0.8078432f, 0.9215687f, 1f);
+                    for (int h = 0; h < 16; h++) 
+                    {
+                        _worldPixels[d * (int)worldSize.x * pixelSize * pixelSize + i * pixelSize + ((int)worldSize.x * h * pixelSize + j)] = 
+                        sprites[Mathf.floortoint(_world[squareBioma])][h*16 + j];
+                    }
                 }
 
+                */
+
+               if (diggo > 0.70f)
+                {
+                    for (int j = 0; j < pixelSize; j++)
+                    {
+                        for (int h = 0; h < pixelSize; h++)
+                        {
+                            _worldPixels[d * (int)worldSize.x * pixelSize * pixelSize + i * pixelSize + (h * (int)worldSize.x * pixelSize + j)] =
+                            sprites[_world[squareBioma]][0][h * pixelSize + j];
+                        }
+                    }
+                }
+                else
+                if (diggo > 0.50f)
+                {
+                    for (int j = 0; j < pixelSize; j++)
+                    {
+                        for (int h = 0; h < pixelSize; h++)
+                        {
+                            _worldPixels[d * (int)worldSize.x * pixelSize * pixelSize + i * pixelSize + (h * (int)worldSize.x * pixelSize + j)] =
+                            sprites[_world[squareBioma]][1][h * pixelSize + j];
+                        }
+                    }
+                }
+                else
+                if(diggo > 0.45f)
+                {
+                    for (int j = 0; j < pixelSize; j++)
+                    {
+                        for (int h = 0; h < pixelSize; h++)
+                        {
+                            _worldPixels[d * (int)worldSize.x * pixelSize * pixelSize + i * pixelSize + (h * (int)worldSize.x * pixelSize + j)] =
+                            sprites[_world[squareBioma]][2][h * pixelSize + j];
+                        }
+                    }
+                }
+                else
+                {
+                    for (int j = 0; j < pixelSize; j++)
+                    {
+                        for (int h = 0; h < pixelSize; h++)
+                        {
+                            _worldPixels[d * (int)worldSize.x * pixelSize * pixelSize + i * pixelSize + (h * (int)worldSize.x * pixelSize + j)] =
+                            sprites[_world[squareBioma]][3][h * pixelSize + j];
+                        }
+                    }
+                }
+
+
+
+
+
+                
+                /*
+                if (_world[d * (int)worldSize.x + i] < 100)
+                {
+                    _worldPixels[d * (int)worldSize.x + i] = Color.black;
+                }
+                else
+                if (_world[d * (int)worldSize.x + i] < 200)
+                {
+                    _worldPixels[d * (int)worldSize.x + i] = Color.green;
+                }
+                else
+                if (_world[d * (int)worldSize.x + i] < 300)
+                {
+                    _worldPixels[d * (int)worldSize.x + i] = Color.cyan;
+                }
+                else
+                if (_world[d * (int)worldSize.x + i] < 400)
+                {
+                    _worldPixels[d * (int)worldSize.x + i] = Color.yellow;
+                }
+
+                Debug.Log(_world[d * (int)worldSize.x + i]);
+                */
 
             }
         }
@@ -198,6 +287,19 @@ public class WorldGridScript : MonoBehaviour
                 _rio[i] = _rio[i + 1];
             }
             _rio[_rio.Count - 1] = ordenaRio;
+        }
+    }
+
+    void loadSprites()
+    {
+        sprites = new Color[numBiomas][][];
+        for (int i = 0; i < numBiomas; i++)
+        {
+            sprites[i] = new Color[_sprites.Length][];
+            for (int d = 0; d < _sprites.Length; d++)
+            {
+                sprites[i][d] = _sprites[d].texture.GetPixels();
+            }
         }
     }
 
