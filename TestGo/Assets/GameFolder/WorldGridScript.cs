@@ -7,8 +7,8 @@ using System.Threading.Tasks;
 public class WorldGridScript : MonoBehaviour
 {
     [Header("Sprites")]
-    [SerializeField] private Sprite[] _sprites; 
-    [SerializeField] private Color[][][] sprites; 
+    [SerializeField] private Sprite[] _sprites;
+    [SerializeField] private Color[][][] sprites;
 
     [Header("Info")]
     [SerializeField] private bool rioExist;
@@ -28,6 +28,7 @@ public class WorldGridScript : MonoBehaviour
     private List<int> _rio;
     private int[] _world;
     private Color[] _worldPixels;
+    private System.Random _random = new System.Random();
 
     /*
     Enumerator Comentado o.O
@@ -72,7 +73,7 @@ public class WorldGridScript : MonoBehaviour
         {
             try
             {
-                getNoise();
+                calculateMapPixels();
             }
             catch (Exception ex)
             {
@@ -99,7 +100,7 @@ public class WorldGridScript : MonoBehaviour
         this.GetComponent<SpriteRenderer>().sprite = spr;
     }
 
-    void getNoise()
+    void calculateMapPixels()
     {
 
         if (_rio != null)
@@ -107,7 +108,50 @@ public class WorldGridScript : MonoBehaviour
             getRio();
         }
 
-        var _random = new System.Random();
+        //gera os recursos do mapa
+        mapRessources();
+
+        //Garante q tenha pelo menos 1 bioma
+        if (biomas.Count == 0)
+        {
+            biomas.Add((int)(worldSize.y / 2) * (int)worldSize.x + (int)worldSize.x / 2);
+            _world[(int)(worldSize.y / 2) * (int)worldSize.x + (int)worldSize.x / 2] = 1;
+        }
+
+        //se tiver um bioma geramos um mapa sem preocupar com a distancia dos biomas
+        if (biomas.Count == 1)
+        {
+            for (int i = 0; i < worldSize.x; i++)
+            {
+                for (int d = 0; d < worldSize.y; d++)
+                {
+                    //squareBioma guarda a posição do bioma mais proximo do nosso quadrado
+                    int squareBioma = biomas[0];
+
+                    getNoise(i, d, squareBioma);
+                }
+            }
+        }//se tiver mais de um bioma geramos um mapa com a distancia dos biomas
+        else
+        {
+            generateMap();
+        }
+
+        if (rioExist)
+        {
+            //reordena o rio para o fluxo do rio(a lista que armazena o fluxo) seguir de forma linear
+            int ordenaRio = _rio[1];
+            for (int i = 1; i < _rio.Count - 1; i++)
+            {
+                _rio[i] = _rio[i + 1];
+            }
+            _rio[_rio.Count - 1] = ordenaRio;
+        }
+    }
+
+    void mapRessources()
+    {
+        //valor aleatorio para geração do mapa
         float _randomValue = 0;
 
         for (int i = 0; i < worldSize.x; i++)
@@ -128,49 +172,49 @@ public class WorldGridScript : MonoBehaviour
                 {
                     //se estiver muito perto vamos ignorar
                     if (Vector3.Distance(new Vector3(Mathf.Floor(_rio[_rio.Count - 1] / (int)worldSize.y), _rio[_rio.Count - 1] % (int)worldSize.x),
-                     new Vector3(i, d)) < (worldSize.x + worldSize.y)/2/1.1f) continue;
+                     new Vector3(i, d)) < (worldSize.x + worldSize.y) / 2 / 1.1f) continue;
 
                     _rio.Add(d * (int)worldSize.x + i);
                     Debug.Log("rio+");
                 }
 
+                //verifica se nasce um bioma nesse bloco
                 if (0.20f < _randomValue && _randomValue < 0.20f + chanceBiomas)
                 {
                     Debug.Log("Bioma adiconado slk");
                     biomas.Add(d * (int)worldSize.x + i);
                     _world[d * (int)worldSize.x + i] = 1;
                 }
-
+                
+                //verifica se nasce minerio nesse bloco
                 if (0.82f < _randomValue && _randomValue < 0.82f + chanceMinerio)
                 {
                     _world[d * (int)worldSize.x + i] = 100;
                 }
 
+                //verifica se nasce uma parede nesse bloco
                 if (0.67f < _randomValue && _randomValue < 0.67f + chanceParede)
                 {
                     _world[d * (int)worldSize.x + i] = 300;
                 }
 
+                //verifica se nasce enfeites nesse bloco
                 if (0.43f < _randomValue && _randomValue < 0.43f + chanceFlor)
                 {
                     _world[d * (int)worldSize.x + i] = 200;
                 }
             }
         }
-        
-        //Garante q tenha pelo menos 1 bioma
-        if (biomas.Count == 0)
-        {
-            biomas.Add((int)(worldSize.y/2)*(int)worldSize.x + (int)worldSize.x/2);
-        }
+    }
 
-
+    void generateMap()
+    {
         for (int i = 0; i < worldSize.x; i++)
         {
             for (int d = 0; d < worldSize.y; d++)
             {
                 //squareBioma guarda a posição do bioma mais proximo do nosso quadrado
-                int squareBioma = biomas[0];   
+                int squareBioma = biomas[0];
                 foreach (int bioma in biomas)
                 {
                     if (Vector3.Distance(new Vector3(Mathf.Floor(bioma / (int)worldSize.y), bioma % (int)worldSize.x),
@@ -178,115 +222,8 @@ public class WorldGridScript : MonoBehaviour
                      new Vector3(i, d))) squareBioma = bioma;
                 }
 
-                float xCoord = ((float)i / 250f) * 18;
-                float yCoord = ((float)d / 250f) * 18;
-
-                float diggo = Mathf.PerlinNoise(xCoord, yCoord);
-
-                //Debug.Log(_worldPixels.Length + " : " + (_world[d * (int)worldSize.x + i] + diggo));
-
-                /*
-                //encaixando 16 pixel por linha em cada j linha(16 linhas)
-                //(essa linha ficou de inutil acho)_worldPixels[d * (int)worldSize.x + i] = sprites[_world[squareBioma]][0].getPixels;
-                for (int j = 0; j < 16; j++)
-                {
-                    for (int h = 0; h < 16; h++) 
-                    {
-                        _worldPixels[d * (int)worldSize.x * pixelSize * pixelSize + i * pixelSize + ((int)worldSize.x * h * pixelSize + j)] = 
-                        sprites[Mathf.floortoint(_world[squareBioma])][h*16 + j];
-                    }
-                }
-
-                */
-
-               if (diggo > 0.70f)
-                {
-                    for (int j = 0; j < pixelSize; j++)
-                    {
-                        for (int h = 0; h < pixelSize; h++)
-                        {
-                            _worldPixels[d * (int)worldSize.x * pixelSize * pixelSize + i * pixelSize + (h * (int)worldSize.x * pixelSize + j)] =
-                            sprites[_world[squareBioma]][0][h * pixelSize + j];
-                        }
-                    }
-                }
-                else
-                if (diggo > 0.50f)
-                {
-                    for (int j = 0; j < pixelSize; j++)
-                    {
-                        for (int h = 0; h < pixelSize; h++)
-                        {
-                            _worldPixels[d * (int)worldSize.x * pixelSize * pixelSize + i * pixelSize + (h * (int)worldSize.x * pixelSize + j)] =
-                            sprites[_world[squareBioma]][1][h * pixelSize + j];
-                        }
-                    }
-                }
-                else
-                if(diggo > 0.45f)
-                {
-                    for (int j = 0; j < pixelSize; j++)
-                    {
-                        for (int h = 0; h < pixelSize; h++)
-                        {
-                            _worldPixels[d * (int)worldSize.x * pixelSize * pixelSize + i * pixelSize + (h * (int)worldSize.x * pixelSize + j)] =
-                            sprites[_world[squareBioma]][2][h * pixelSize + j];
-                        }
-                    }
-                }
-                else
-                {
-                    for (int j = 0; j < pixelSize; j++)
-                    {
-                        for (int h = 0; h < pixelSize; h++)
-                        {
-                            _worldPixels[d * (int)worldSize.x * pixelSize * pixelSize + i * pixelSize + (h * (int)worldSize.x * pixelSize + j)] =
-                            sprites[_world[squareBioma]][3][h * pixelSize + j];
-                        }
-                    }
-                }
-
-
-
-
-
-                
-                /*
-                if (_world[d * (int)worldSize.x + i] < 100)
-                {
-                    _worldPixels[d * (int)worldSize.x + i] = Color.black;
-                }
-                else
-                if (_world[d * (int)worldSize.x + i] < 200)
-                {
-                    _worldPixels[d * (int)worldSize.x + i] = Color.green;
-                }
-                else
-                if (_world[d * (int)worldSize.x + i] < 300)
-                {
-                    _worldPixels[d * (int)worldSize.x + i] = Color.cyan;
-                }
-                else
-                if (_world[d * (int)worldSize.x + i] < 400)
-                {
-                    _worldPixels[d * (int)worldSize.x + i] = Color.yellow;
-                }
-
-                Debug.Log(_world[d * (int)worldSize.x + i]);
-                */
-
+                getNoise(i, d, squareBioma);
             }
-        }
-
-        if (rioExist)
-        {
-            //reordena o rio para o fluxo do rio(a lista que armazena o fluxo) seguir de forma linear
-            int ordenaRio = _rio[1];
-            for (int i = 1; i < _rio.Count - 1; i++)
-            {
-                _rio[i] = _rio[i + 1];
-            }
-            _rio[_rio.Count - 1] = ordenaRio;
         }
     }
 
@@ -303,12 +240,67 @@ public class WorldGridScript : MonoBehaviour
         }
     }
 
+    void getNoise(int i, int d, int squareBioma)
+    {
+        float xCoord = ((float)i / 250f) * 18;
+        float yCoord = ((float)d / 250f) * 18;
+
+        float diggo = Mathf.PerlinNoise(xCoord, yCoord);
+
+        if (diggo > 0.70f)
+        {
+            for (int j = 0; j < pixelSize; j++)
+            {
+                for (int h = 0; h < pixelSize; h++)
+                {
+                    _worldPixels[d * (int)worldSize.x * pixelSize * pixelSize + i * pixelSize + (h * (int)worldSize.x * pixelSize + j)] =
+                    sprites[_world[squareBioma] - 1][0][h * pixelSize + j];
+                }
+            }
+        }
+        else
+         if (diggo > 0.50f)
+        {
+            for (int j = 0; j < pixelSize; j++)
+            {
+                for (int h = 0; h < pixelSize; h++)
+                {
+                    _worldPixels[d * (int)worldSize.x * pixelSize * pixelSize + i * pixelSize + (h * (int)worldSize.x * pixelSize + j)] =
+                    sprites[_world[squareBioma] - 1][1][h * pixelSize + j];
+                }
+            }
+        }
+        else
+         if (diggo > 0.45f)
+        {
+            for (int j = 0; j < pixelSize; j++)
+            {
+                for (int h = 0; h < pixelSize; h++)
+                {
+                    _worldPixels[d * (int)worldSize.x * pixelSize * pixelSize + i * pixelSize + (h * (int)worldSize.x * pixelSize + j)] =
+                    sprites[_world[squareBioma] - 1][2][h * pixelSize + j];
+                }
+            }
+        }
+        else
+        {
+            for (int j = 0; j < pixelSize; j++)
+            {
+                for (int h = 0; h < pixelSize; h++)
+                {
+                    _worldPixels[d * (int)worldSize.x * pixelSize * pixelSize + i * pixelSize + (h * (int)worldSize.x * pixelSize + j)] =
+                    sprites[_world[squareBioma] - 1][3][h * pixelSize + j];
+                }
+            }
+        }
+
+    }
+
     void getRio()
     {
         //adcionamos os pontos onde o rio vai começar e acabar
-        var _random = new System.Random();
         float _randomValue = 0;
- 
+
         for (int i = 1; i < (int)worldSize.x - 1; i++)
         {
             if (_rio.Count >= 2) { return; }
@@ -388,3 +380,26 @@ public class WorldGridScript : MonoBehaviour
 
 
 
+/*
+                if (_world[d * (int)worldSize.x + i] < 100)
+                {
+                    _worldPixels[d * (int)worldSize.x + i] = Color.black;
+                }
+                else
+                if (_world[d * (int)worldSize.x + i] < 200)
+                {
+                    _worldPixels[d * (int)worldSize.x + i] = Color.green;
+                }
+                else
+                if (_world[d * (int)worldSize.x + i] < 300)
+                {
+                    _worldPixels[d * (int)worldSize.x + i] = Color.cyan;
+                }
+                else
+                if (_world[d * (int)worldSize.x + i] < 400)
+                {
+                    _worldPixels[d * (int)worldSize.x + i] = Color.yellow;
+                }
+
+                Debug.Log(_world[d * (int)worldSize.x + i]);
+                */
