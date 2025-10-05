@@ -312,12 +312,12 @@ MonoBehaviour:
   - {fileID: 21300000, guid: c63be5d679dbdb240b44b9fd05cc795c, type: 3}
   rioExist: 1
   numBiomas: 1
-  chanceBiomas: 0.00003
-  chanceMinerio: 0.09
-  chanceParede: 0.09
-  chanceFlor: 0.07
-  chanceRio: 0.003
-  worldSize: {x: 2000, y: 2000, z: 0}
+  chanceBiomas: 3
+  chanceMinerio: 30
+  chanceParede: 15
+  chanceFlor: 60
+  chanceRio: 140
+  worldSize: {x: 350, y: 350, z: 0}
   pixelSize: 16
 --- !u!212 &592665430
 SpriteRenderer:
