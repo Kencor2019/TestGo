@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using System;
 using System.Threading.Tasks;
+using Unity.VisualScripting;
 
 public class WorldGridScript : MonoBehaviour
 {
@@ -61,6 +62,7 @@ public class WorldGridScript : MonoBehaviour
         _worldPixels = new Color[(int)worldSize.x * (int)worldSize.y * pixelSize * pixelSize];
         biomas = new List<int>();
         _rio = null;
+        //Debug.Log(_rio.Count);
         //assim eu posso colocar um valor simples para cada chance (ex: chanceBioma = 3 media de 3 biomas por mapa)
         chanceBiomas /= (worldSize.x * worldSize.y);
         chanceMinerio /= (worldSize.x * worldSize.y);
@@ -126,39 +128,17 @@ public class WorldGridScript : MonoBehaviour
             _world[(int)(worldSize.y / 2) * (int)worldSize.x + (int)worldSize.x / 2] = 1;
         }
 
-        //Aqui vamos pegar os pontos onde o Rio atravessa
-        Vector3 pop = Vector3.zero;
-        float interpolate = 0;
-        foreach (int rio in _rio)
+        //Aqui vamos pegar os pontos onde o Rio atravessa antes vamos reordenar o rio
+        if (rioExist)
         {
-            if (_rio.IndexOf(rio) == _rio.Count - 1)
+            int ordenaRio = _rio[1];
+            for (int i = 1; i < _rio.Count - 1; i++)
             {
-                continue;
+                _rio[i] = _rio[i + 1];
             }
-            int nextRio = _rio.IndexOf(rio) + 1;
-            Vector3 _anchor = new Vector3(rio % (int)worldSize.x, Mathf.Floor(rio / (int)worldSize.x));
-            Vector3 _anchor2 = new Vector3(_rio[nextRio] % (int)worldSize.x, Mathf.Floor(_rio[nextRio] / (int)worldSize.x));
-
-            Vector3 _suport = new Vector3(_rio[nextRio] % (int)worldSize.x, 0);
-            Vector3 _suport2 = new Vector3(rio % (int)worldSize.x, 0);
-
-            int _distanc = Mathf.FloorToInt(Vector3.Distance(
-                new Vector3(rio % (int)worldSize.x, Mathf.Floor(rio / (int)worldSize.x)),
-                new Vector3(_rio[nextRio] % (int)worldSize.x, Mathf.Floor(_rio[nextRio] / (int)worldSize.x)))
-                );
-
-            for (int i = 0; i < _distanc; i++)
-            {
-                interpolate = 1 / _distanc * i;
-
-                Vector3 lerpSuper = LerpSuper(_anchor, _suport, _anchor2, _suport2, interpolate);
-
-                Debug.Log(lerpSuper);
-                Debug.DrawLine(lerpSuper, LerpSuper(_anchor, _suport, _anchor2, _suport2, interpolate + 1 / _distanc));
-
-            }
+            _rio[_rio.Count - 1] = ordenaRio;
+            rioMakerFluid();
         }
-
 
         //se tiver um bioma geramos um mapa sem preocupar com a distancia dos biomas
         if (biomas.Count == 1)
@@ -178,36 +158,41 @@ public class WorldGridScript : MonoBehaviour
         {
             generateMap();
         }
-
-        if (rioExist)
-        {
-            //reordena o rio para o fluxo do rio(a lista que armazena o fluxo) seguir de forma linear
-            int ordenaRio = _rio[1];
-            for (int i = 1; i < _rio.Count - 1; i++)
-            {
-                _rio[i] = _rio[i + 1];
-            }
-            _rio[_rio.Count - 1] = ordenaRio;
-        }
     }
 
-    Vector3 LerpSuper(Vector3 a1, Vector3 s1, Vector3 a2, Vector3 s2, float t)
+    void rioMakerFluid()
     {
-        // Interpola os dois lados da curva
-        Vector3 side1 = Vector3.Lerp(
-            Vector3.Lerp(a1, s1, t),
-            Vector3.Lerp(s1, s2, t),
-            t
-        );
+        float interpolate = 0;
+        for(int i = 0; i < _rio.Count - 1; i++)
+        {
+            float _distanc = Mathf.FloorToInt(Vector3.Distance(
+                new Vector3(_rio[i] % (int)worldSize.x, Mathf.Floor(_rio[i] / (int)worldSize.x)),
+                new Vector3(_rio[i+1] % (int)worldSize.x, Mathf.Floor(_rio[i+1] / (int)worldSize.x)))
+                );
 
-        Vector3 side2 = Vector3.Lerp(
-            Vector3.Lerp(s1, s2, t),
-            Vector3.Lerp(s2, a2, t),
-            t
-        );
+            int nextRio = i + 1;
+            Vector3 _anchor = new Vector3(_rio[i] % (int)worldSize.x, Mathf.Floor(_rio[i] / (int)worldSize.x));
+            Vector3 _anchor2 = new Vector3(_rio[i+1] % (int)worldSize.x, Mathf.Floor(_rio[i+1] / (int)worldSize.x));
 
-        // Combina os dois lados num resultado final
-        return Vector3.Lerp(side1, side2, t);
+            Vector3 _suport = new Vector3(_rio[i] % (int)worldSize.x + ((i%2 == 0)? + _distanc/10 : - _distanc/10), Mathf.Floor(_rio[i] / (int)worldSize.x + ((i%2 == 0)? - _distanc/10 : + _distanc/10)));
+            Vector3 _suport2 = new Vector3(_rio[i+1] % (int)worldSize.x + ((i%2 == 0)? + _distanc/10 : - _distanc/10), Mathf.Floor(_rio[i+1] / (int)worldSize.x + ((i%2 == 0)? - _distanc/10 : + _distanc/10)));
+
+            for (int d = 0; d <= _distanc * 2; d++)
+            {
+                interpolate = (1f / _distanc * 2) * d;
+                Vector3 lerpSuper = LerpSuper(_anchor, _suport, _anchor2, _suport2, interpolate);
+
+                //caso tenha pontos fora do grid
+                if ((int)lerpSuper.y < 0 || (int)lerpSuper.y >= worldSize.y || (int)lerpSuper.x < 0 || (int)lerpSuper.x >= worldSize.x)
+                {
+                    continue;
+                }
+
+                _world[(int)lerpSuper.y * (int)worldSize.x + (int)lerpSuper.x] = 400;
+                
+                Debug.DrawLine(lerpSuper, LerpSuper(_anchor, _suport, _anchor2, _suport2, interpolate + 1 / _distanc));
+            }
+        }
     }
 
 
@@ -292,6 +277,18 @@ public class WorldGridScript : MonoBehaviour
         {
             for (int d = 0; d < worldSize.y; d++)
             {
+                if (_world[d * (int)worldSize.x + i] >= 400 && _world[d * (int)worldSize.x + i] < 500)
+                {
+                    for (int j = 0; j < pixelSize; j++)
+                    {
+                        for (int h = 0; h < pixelSize; h++)
+                        {
+                            _worldPixels[d * (int)worldSize.x * pixelSize * pixelSize + i * pixelSize + (h * (int)worldSize.x * pixelSize + j)] =
+                            Color.blue;
+                        }
+                    }
+                    continue;
+                }
                 //squareBioma guarda a posição do bioma mais proximo do nosso quadrado
                 int squareBioma = biomas[0];
                 foreach (int bioma in biomas)
@@ -452,42 +449,31 @@ public class WorldGridScript : MonoBehaviour
         }
 
     }
+    
+    Vector3 LerpSuper(Vector3 a1, Vector3 s1, Vector3 a2, Vector3 s2, float t)
+    {
+        // Interpola os dois lados da curva
+        Vector3 side1 = Vector3.Lerp(
+            Vector3.Lerp(a1, s1, t),
+            Vector3.Lerp(s1, s2, t),
+            t
+        );
+
+        Vector3 side2 = Vector3.Lerp(
+            Vector3.Lerp(s1, s2, t),
+            Vector3.Lerp(s2, a2, t),
+            t
+        );
+
+        // Combina os dois lados num resultado final
+        return Vector3.Lerp(side1, side2, t);
+    }
 
     // Update is called once per frame
     void Update()
-    {
-        for (int i = 0; i < _rio.Count - 1; i++)
-        {
-            Debug.DrawLine(new Vector3(_rio[i] % (int)worldSize.x, Mathf.Floor(_rio[i] / (int)worldSize.x)),
-             new Vector3(_rio[i+1] % (int)worldSize.x, Mathf.Floor(_rio[i+1] / (int)worldSize.x)), Color.red);
-        }
+    { 
             
-
-        float interpolate = 0;
-        for(int i = 0; i < _rio.Count - 1; i++)
-        {
-            float _distanc = Mathf.FloorToInt(Vector3.Distance(
-                new Vector3(_rio[i] % (int)worldSize.x, Mathf.Floor(_rio[i] / (int)worldSize.x)),
-                new Vector3(_rio[i+1] % (int)worldSize.x, Mathf.Floor(_rio[i+1] / (int)worldSize.x)))
-                );
-
-            int nextRio = i + 1;
-            Vector3 _anchor = new Vector3(_rio[i] % (int)worldSize.x, Mathf.Floor(_rio[i] / (int)worldSize.x));
-            Vector3 _anchor2 = new Vector3(_rio[i+1] % (int)worldSize.x, Mathf.Floor(_rio[i+1] / (int)worldSize.x));
-
-            Vector3 _suport = new Vector3(_rio[i] % (int)worldSize.x + _distanc/10, Mathf.Floor(_rio[i] / (int)worldSize.x - _distanc/10));
-            Vector3 _suport2 = new Vector3(_rio[i+1] % (int)worldSize.x + _distanc/10, Mathf.Floor(_rio[i+1] / (int)worldSize.x - _distanc/10));
-
-            for (int d = 0; d <= _distanc; d++)
-            {
-                interpolate = (1f / _distanc) * d;
-
-                Vector3 lerpSuper = LerpSuper(_anchor, _suport, _anchor2, _suport2, interpolate);
-                
-                Debug.DrawLine(lerpSuper, LerpSuper(_anchor, _suport, _anchor2, _suport2, interpolate + 1 / _distanc));
-
-            }
-        }
+        
     }
 }
 
