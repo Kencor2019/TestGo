@@ -46,7 +46,7 @@ public class WorldGridScript : MonoBehaviour
     300 parede 1;
     ...
     304 parede 4;
-    400 rio;
+    1000 rio;
     */
     // Start is called before the first frame update
     void Start()
@@ -140,6 +140,8 @@ public class WorldGridScript : MonoBehaviour
             rioMakerFluid();
         }
 
+        GenerateRessources();
+
         //se tiver um bioma geramos um mapa sem preocupar com a distancia dos biomas
         if (biomas.Count == 1)
         {
@@ -158,6 +160,11 @@ public class WorldGridScript : MonoBehaviour
         {
             generateMap();
         }
+    }
+
+    void GenerateRessources()
+    {
+        
     }
 
     void rioMakerFluid()
@@ -188,7 +195,7 @@ public class WorldGridScript : MonoBehaviour
                     continue;
                 }
 
-                _world[(int)lerpSuper.y * (int)worldSize.x + (int)lerpSuper.x] = 400;
+                _world[(int)lerpSuper.y * (int)worldSize.x + (int)lerpSuper.x] = 1000;
                 
                 Debug.DrawLine(lerpSuper, LerpSuper(_anchor, _suport, _anchor2, _suport2, interpolate + 1 / _distanc));
             }
@@ -277,7 +284,7 @@ public class WorldGridScript : MonoBehaviour
         {
             for (int d = 0; d < worldSize.y; d++)
             {
-                if (_world[d * (int)worldSize.x + i] >= 400 && _world[d * (int)worldSize.x + i] < 500)
+                if (_world[d * (int)worldSize.x + i] >= 1000 && _world[d * (int)worldSize.x + i] < 2000)
                 {
                     for (int j = 0; j < pixelSize; j++)
                     {
