@@ -69,7 +69,7 @@ public class WorldGridScript : MonoBehaviour
         chanceParede /= (worldSize.x * worldSize.y);
         chanceFlor /= (worldSize.x * worldSize.y);
         chanceRio /= (worldSize.x * worldSize.y);
-        
+       
 
         //caso tenha rio
         if (rioExist)
@@ -164,7 +164,44 @@ public class WorldGridScript : MonoBehaviour
 
     void GenerateRessources()
     {
-        
+        for (int i = 0; i < worldSize.x; i++)
+        {
+            for (int d = 0; d < worldSize.y; d++)
+            {
+                for (int j = 0; j < 5; j++)
+                {
+                    for (int k = 0; k < 5; k++)
+                    {
+                        if (d * (int)worldSize.x + ((k - 2) * (int)worldSize.x) + i + (j - 2) < 0 || d * (int)worldSize.x + ((k - 2) * (int)worldSize.x) + i + (j - 2) >= worldSize.x * worldSize.y)
+                        {
+                            continue;
+                        }
+                        //pra fazer o rio based
+                        if (_world[d * (int)worldSize.x + i] == 1000)
+                        {
+                            if(_world[d * (int)worldSize.x + ((k - 2) * (int)worldSize.x) + i + (j - 2)] == 1000) continue;
+                            _world[d * (int)worldSize.x + ((k - 2) * (int)worldSize.x) + i + (j - 2)] = 1001;
+                        }
+
+                        //pra dar cluster effect nos minerios, flores e paredes
+                        if (_world[d * (int)worldSize.x + i] >= 300)
+                        {
+
+                        }
+                        else
+                        if (_world[d * (int)worldSize.x + i] >= 200)
+                        {
+
+                        }
+                        else
+                        if (_world[d * (int)worldSize.x + i] >= 100)
+                        {
+
+                        }
+                    }
+                }
+            }
+        }
     }
 
     void rioMakerFluid()
@@ -184,9 +221,9 @@ public class WorldGridScript : MonoBehaviour
             Vector3 _suport = new Vector3(_rio[i] % (int)worldSize.x + ((i%2 == 0)? + _distanc/10 : - _distanc/10), Mathf.Floor(_rio[i] / (int)worldSize.x + ((i%2 == 0)? - _distanc/10 : + _distanc/10)));
             Vector3 _suport2 = new Vector3(_rio[i+1] % (int)worldSize.x + ((i%2 == 0)? + _distanc/10 : - _distanc/10), Mathf.Floor(_rio[i+1] / (int)worldSize.x + ((i%2 == 0)? - _distanc/10 : + _distanc/10)));
 
-            for (int d = 0; d <= _distanc * 2; d++)
+            for (int d = 0; d <= _distanc; d++)
             {
-                interpolate = (1f / _distanc * 2) * d;
+                interpolate = (1f / _distanc) * d;
                 Vector3 lerpSuper = LerpSuper(_anchor, _suport, _anchor2, _suport2, interpolate);
 
                 //caso tenha pontos fora do grid
@@ -196,7 +233,7 @@ public class WorldGridScript : MonoBehaviour
                 }
 
                 _world[(int)lerpSuper.y * (int)worldSize.x + (int)lerpSuper.x] = 1000;
-                
+               
                 Debug.DrawLine(lerpSuper, LerpSuper(_anchor, _suport, _anchor2, _suport2, interpolate + 1 / _distanc));
             }
         }
@@ -239,7 +276,6 @@ public class WorldGridScript : MonoBehaviour
                     if (!devoIgnorar)
                     {
                         _rio.Add(d * (int)worldSize.x + i);
-                        Debug.Log("rio+   " +  (worldSize.x + worldSize.y) / 5);;
                     }
 
                     continue;
@@ -248,7 +284,7 @@ public class WorldGridScript : MonoBehaviour
                 //verifica se nasce um bioma nesse bloco
                 if (0.20f < _randomValue && _randomValue < 0.20f + chanceBiomas)
                 {
-                    Debug.Log("Bioma adiconado slk");
+                    Debug.Log("Added Bioma");
                     biomas.Add(d * (int)worldSize.x + i);
                     _world[d * (int)worldSize.x + i] = 1;
                     continue;
@@ -284,6 +320,18 @@ public class WorldGridScript : MonoBehaviour
         {
             for (int d = 0; d < worldSize.y; d++)
             {
+                if (_world[d * (int)worldSize.x + i] == 1001)
+                {
+                    for (int j = 0; j < pixelSize; j++)
+                    {
+                        for (int h = 0; h < pixelSize; h++)
+                        {
+                            _worldPixels[d * (int)worldSize.x * pixelSize * pixelSize + i * pixelSize + (h * (int)worldSize.x * pixelSize + j)] =
+                            Color.cyan;
+                        }
+                    }
+                    continue;
+                }
                 if (_world[d * (int)worldSize.x + i] >= 1000 && _world[d * (int)worldSize.x + i] < 2000)
                 {
                     for (int j = 0; j < pixelSize; j++)
@@ -393,7 +441,7 @@ public class WorldGridScript : MonoBehaviour
             if (0.09f < _randomValue && _randomValue < 0.09f + chanceRio + antiGargalo)
             {
                 //se o primeiro ponto tiver nascido e este estiver muito perto não vamos ignorar
-                if(_rio.Count > 0) 
+                if(_rio.Count > 0)
                     if (Vector3.Distance(new Vector3(_rio[0] % (int)worldSize.x, Mathf.Floor(_rio[0] / (int)worldSize.x)),
                  new Vector3(i % (int)worldSize.x, Mathf.Floor(i / (int)worldSize.x))) < (worldSize.x + worldSize.y) / 2) continue;
 
@@ -409,7 +457,7 @@ public class WorldGridScript : MonoBehaviour
             if (0.09f < _randomValue && _randomValue < 0.09f + chanceRio + antiGargalo)
             {
                 //se o primeiro ponto tiver nascido e este estiver muito perto não vamos ignorar
-                if(_rio.Count > 0) 
+                if(_rio.Count > 0)
                     if (Vector3.Distance(new Vector3(_rio[0] % (int)worldSize.x, Mathf.Floor(_rio[0] / (int)worldSize.x)),
                  new Vector3((i * (int)worldSize.y) % (int)worldSize.x, Mathf.Floor((i * (int)worldSize.y) / (int)worldSize.x))) < (worldSize.x + worldSize.y) / 2) continue;
 
@@ -425,7 +473,7 @@ public class WorldGridScript : MonoBehaviour
             if (0.09f < _randomValue && _randomValue < 0.09f + chanceRio + antiGargalo)
             {
                 //se o primeiro ponto tiver nascido e este estiver muito perto não vamos ignorar
-                if(_rio.Count > 0) 
+                if(_rio.Count > 0)
                     if (Vector3.Distance(new Vector3(_rio[0] % (int)worldSize.x, Mathf.Floor(_rio[0] / (int)worldSize.x)),
                  new Vector3(((i + 1) * (int)worldSize.y - 1) % (int)worldSize.x, Mathf.Floor(i * (int)worldSize.y / (int)worldSize.x))) < (worldSize.x + worldSize.y) / 2) continue;
 
@@ -441,7 +489,7 @@ public class WorldGridScript : MonoBehaviour
             if (0.09f < _randomValue && _randomValue < 0.09f + chanceRio + antiGargalo)
             {
                 //se o primeiro ponto tiver nascido e este estiver muito perto não vamos ignorar
-                if(_rio.Count > 0) 
+                if(_rio.Count > 0)
                     if (Vector3.Distance(new Vector3(_rio[0] % (int)worldSize.x, Mathf.Floor(_rio[0] / (int)worldSize.x)),
                  new Vector3((i + ((int)worldSize.x - 1) * (int)worldSize.y) % (int)worldSize.x, Mathf.Floor((i + ((int)worldSize.x - 1) * (int)worldSize.y) / (int)worldSize.x))) < (worldSize.x + worldSize.y) / 2) continue;
 
@@ -456,7 +504,7 @@ public class WorldGridScript : MonoBehaviour
         }
 
     }
-    
+   
     Vector3 LerpSuper(Vector3 a1, Vector3 s1, Vector3 a2, Vector3 s2, float t)
     {
         // Interpola os dois lados da curva
@@ -478,9 +526,9 @@ public class WorldGridScript : MonoBehaviour
 
     // Update is called once per frame
     void Update()
-    { 
-            
-        
+    {
+           
+       
     }
 }
 
