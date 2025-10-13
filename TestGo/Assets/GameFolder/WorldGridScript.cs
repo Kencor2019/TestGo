@@ -164,23 +164,28 @@ public class WorldGridScript : MonoBehaviour
 
     void GenerateRessources()
     {
+        int maxCluster = 9;
         for (int i = 0; i < worldSize.x; i++)
         {
             for (int d = 0; d < worldSize.y; d++)
             {
-                for (int j = 0; j < 5; j++)
+                if(_world[d * (int)worldSize.x + i] < 100)
                 {
-                    for (int k = 0; k < 5; k++)
+                    continue;
+                }
+                for (int j = 0; j < maxCluster; j++)
+                {
+                    for (int k = 0; k < maxCluster; k++)
                     {
-                        if (d * (int)worldSize.x + ((k - 2) * (int)worldSize.x) + i + (j - 2) < 0 || d * (int)worldSize.x + ((k - 2) * (int)worldSize.x) + i + (j - 2) >= worldSize.x * worldSize.y)
+                        if ((d + (k - ((maxCluster-1)/2))) * (int)worldSize.x + i + (j - ((maxCluster-1)/2)) < 0 || (d + (k - ((maxCluster-1)/2))) * (int)worldSize.x + i + (j - ((maxCluster-1)/2)) >= worldSize.x * worldSize.y)
                         {
                             continue;
                         }
                         //pra fazer o rio based
                         if (_world[d * (int)worldSize.x + i] == 1000)
                         {
-                            if(_world[d * (int)worldSize.x + ((k - 2) * (int)worldSize.x) + i + (j - 2)] == 1000) continue;
-                            _world[d * (int)worldSize.x + ((k - 2) * (int)worldSize.x) + i + (j - 2)] = 1001;
+                            if(_world[(d + (k - ((maxCluster-1)/2))) * (int)worldSize.x + i + (j - ((maxCluster-1)/2))] == 1000) continue;
+                            _world[(d + (k - ((maxCluster-1)/2))) * (int)worldSize.x + i + (j - ((maxCluster-1)/2))] = 1001;
                         }
 
                         //pra dar cluster effect nos minerios, flores e paredes
