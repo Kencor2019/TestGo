@@ -4,11 +4,14 @@ using UnityEngine;
 using System;
 using System.Threading.Tasks;
 using Unity.VisualScripting;
+using Unity.Collections;
+using Unity.Collections.LowLevel.Unsafe;
 
 public class WorldGridScript : MonoBehaviour
 {
     [Header("Sprites")]
     [SerializeField] private Sprite[] _sprites;
+    [SerializeField] private Sprite[] _extraSprites;
     [SerializeField] private Color[][][] sprites;
 
     [Header("Info")]
@@ -23,7 +26,7 @@ public class WorldGridScript : MonoBehaviour
     [SerializeField] private float chanceRio;           //a partir do 0.09
 
     [Header("Tamanhos")]
-    [SerializeField] private Vector3 worldSize;
+    [SerializeField] private Vector3Int worldSize;
     [SerializeField] private int pixelSize;
     private List<int> biomas;
     private List<int> _rio;
@@ -58,8 +61,8 @@ public class WorldGridScript : MonoBehaviour
     async Task startMap()
     {
         //inicializa as variaveis do mundo
-        _world = new int[(int)worldSize.x * (int)worldSize.y];
-        _worldPixels = new Color[(int)worldSize.x * (int)worldSize.y * pixelSize * pixelSize];
+        _world = new int[worldSize.x * worldSize.y];
+        _worldPixels = new Color[worldSize.x * worldSize.y * pixelSize * pixelSize];
         biomas = new List<int>();
         _rio = null;
         //Debug.Log(_rio.Count);
@@ -92,7 +95,7 @@ public class WorldGridScript : MonoBehaviour
         });
 
         //textura q vai receber cada pixel do mapa (ela recebendo e depois o apply)
-        Texture2D _texture = new Texture2D((int)worldSize.x * pixelSize, (int)worldSize.y * pixelSize, TextureFormat.RGBA32, false);
+        Texture2D _texture = new Texture2D(worldSize.x * pixelSize, worldSize.y * pixelSize, TextureFormat.RGBA32, false);
 
         // Desliga o filtro bilinear (usa point filtering)
         //_texture.filterMode = FilterMode.Point;
@@ -101,7 +104,7 @@ public class WorldGridScript : MonoBehaviour
         _texture.wrapMode = TextureWrapMode.Clamp;
 
         //Recebe os pixels e da o apply
-        _texture.SetPixels(0, 0, (int)worldSize.x * pixelSize, (int)worldSize.y * pixelSize, _worldPixels);
+        _texture.SetPixels(0, 0, worldSize.x * pixelSize, worldSize.y * pixelSize, _worldPixels);
 
         _texture.Apply();
 
@@ -124,8 +127,8 @@ public class WorldGridScript : MonoBehaviour
         //Garante q tenha pelo menos 1 bioma
         if (biomas.Count == 0)
         {
-            biomas.Add((int)(worldSize.y / 2) * (int)worldSize.x + (int)worldSize.x / 2);
-            _world[(int)(worldSize.y / 2) * (int)worldSize.x + (int)worldSize.x / 2] = 1;
+            biomas.Add((int)(worldSize.y / 2) * worldSize.x + worldSize.x / 2);
+            _world[(int)(worldSize.y / 2) * worldSize.x + worldSize.x / 2] = 1;
         }
 
         //Aqui vamos pegar os pontos onde o Rio atravessa antes vamos reordenar o rio
@@ -164,12 +167,13 @@ public class WorldGridScript : MonoBehaviour
 
     void GenerateRessources()
     {
+          float _randomValue = 0;
         int maxCluster = 9;
         for (int i = 0; i < worldSize.x; i++)
         {
             for (int d = 0; d < worldSize.y; d++)
             {
-                if(_world[d * (int)worldSize.x + i] < 100)
+                if(_world[d * worldSize.x + i] < 100)
                 {
                     continue;
                 }
@@ -177,29 +181,32 @@ public class WorldGridScript : MonoBehaviour
                 {
                     for (int k = 0; k < maxCluster; k++)
                     {
-                        if ((d + (k - ((maxCluster-1)/2))) * (int)worldSize.x + i + (j - ((maxCluster-1)/2)) < 0 || (d + (k - ((maxCluster-1)/2))) * (int)worldSize.x + i + (j - ((maxCluster-1)/2)) >= worldSize.x * worldSize.y)
+                        if ((d + (k - ((maxCluster - 1) / 2))) * worldSize.x + i + (j - ((maxCluster - 1) / 2)) < 0 || (d + (k - ((maxCluster - 1) / 2))) * worldSize.x + i + (j - ((maxCluster - 1) / 2)) >= worldSize.x * worldSize.y)
                         {
                             continue;
                         }
+
+                        _randomValue = (float)_random.NextDouble();
+
                         //pra fazer o rio based
-                        if (_world[d * (int)worldSize.x + i] == 1000)
+                        if (_world[d * worldSize.x + i] == 1000)
                         {
-                            if(_world[(d + (k - ((maxCluster-1)/2))) * (int)worldSize.x + i + (j - ((maxCluster-1)/2))] == 1000) continue;
-                            _world[(d + (k - ((maxCluster-1)/2))) * (int)worldSize.x + i + (j - ((maxCluster-1)/2))] = 1001;
+                            if(_world[(d + (k - ((maxCluster-1)/2))) * worldSize.x + i + (j - ((maxCluster-1)/2))] == 1000) continue;
+                            _world[(d + (k - ((maxCluster-1)/2))) * worldSize.x + i + (j - ((maxCluster-1)/2))] = 1001;
                         }
 
                         //pra dar cluster effect nos minerios, flores e paredes
-                        if (_world[d * (int)worldSize.x + i] >= 300)
+                        if (_world[d * worldSize.x + i] >= 300)
+                        {
+                            
+                        }
+                        else
+                        if (_world[d * worldSize.x + i] >= 200)
                         {
 
                         }
                         else
-                        if (_world[d * (int)worldSize.x + i] >= 200)
-                        {
-
-                        }
-                        else
-                        if (_world[d * (int)worldSize.x + i] >= 100)
+                        if (_world[d * worldSize.x + i] >= 100)
                         {
 
                         }
@@ -215,16 +222,16 @@ public class WorldGridScript : MonoBehaviour
         for(int i = 0; i < _rio.Count - 1; i++)
         {
             float _distanc = Mathf.FloorToInt(Vector3.Distance(
-                new Vector3(_rio[i] % (int)worldSize.x, Mathf.Floor(_rio[i] / (int)worldSize.x)),
-                new Vector3(_rio[i+1] % (int)worldSize.x, Mathf.Floor(_rio[i+1] / (int)worldSize.x)))
+                new Vector3(_rio[i] % worldSize.x, Mathf.Floor(_rio[i] / worldSize.x)),
+                new Vector3(_rio[i+1] % worldSize.x, Mathf.Floor(_rio[i+1] / worldSize.x)))
                 );
 
             int nextRio = i + 1;
-            Vector3 _anchor = new Vector3(_rio[i] % (int)worldSize.x, Mathf.Floor(_rio[i] / (int)worldSize.x));
-            Vector3 _anchor2 = new Vector3(_rio[i+1] % (int)worldSize.x, Mathf.Floor(_rio[i+1] / (int)worldSize.x));
+            Vector3 _anchor = new Vector3(_rio[i] % worldSize.x, Mathf.Floor(_rio[i] / worldSize.x));
+            Vector3 _anchor2 = new Vector3(_rio[i+1] % worldSize.x, Mathf.Floor(_rio[i+1] / worldSize.x));
 
-            Vector3 _suport = new Vector3(_rio[i] % (int)worldSize.x + ((i%2 == 0)? + _distanc/10 : - _distanc/10), Mathf.Floor(_rio[i] / (int)worldSize.x + ((i%2 == 0)? - _distanc/10 : + _distanc/10)));
-            Vector3 _suport2 = new Vector3(_rio[i+1] % (int)worldSize.x + ((i%2 == 0)? + _distanc/10 : - _distanc/10), Mathf.Floor(_rio[i+1] / (int)worldSize.x + ((i%2 == 0)? - _distanc/10 : + _distanc/10)));
+            Vector3 _suport = new Vector3(_rio[i] % worldSize.x + ((i%2 == 0)? + _distanc/10 : - _distanc/10), Mathf.Floor(_rio[i] / worldSize.x + ((i%2 == 0)? - _distanc/10 : + _distanc/10)));
+            Vector3 _suport2 = new Vector3(_rio[i+1] % worldSize.x + ((i%2 == 0)? + _distanc/10 : - _distanc/10), Mathf.Floor(_rio[i+1] / worldSize.x + ((i%2 == 0)? - _distanc/10 : + _distanc/10)));
 
             for (int d = 0; d <= _distanc; d++)
             {
@@ -237,7 +244,7 @@ public class WorldGridScript : MonoBehaviour
                     continue;
                 }
 
-                _world[(int)lerpSuper.y * (int)worldSize.x + (int)lerpSuper.x] = 1000;
+                _world[(int)lerpSuper.y * worldSize.x + (int)lerpSuper.x] = 1000;
                
                 Debug.DrawLine(lerpSuper, LerpSuper(_anchor, _suport, _anchor2, _suport2, interpolate + 1 / _distanc));
             }
@@ -257,7 +264,7 @@ public class WorldGridScript : MonoBehaviour
                 //bordas de paredes
                 if (i == 0 || d == 0 || i == worldSize.x - 1 || d == worldSize.y - 1)
                 {
-                    _world[d * (int)worldSize.x + i] = 300;
+                    _world[d * worldSize.x + i] = 300;
                     continue;
                 }
 
@@ -270,7 +277,7 @@ public class WorldGridScript : MonoBehaviour
                     bool devoIgnorar = false;
                     foreach (int rio in _rio)
                     {
-                        if (Vector3.Distance(new Vector3(rio % (int)worldSize.x, Mathf.Floor(rio / (int)worldSize.x)),
+                        if (Vector3.Distance(new Vector3(rio % worldSize.x, Mathf.Floor(rio / worldSize.x)),
                             new Vector3(i, d)) < (worldSize.x + worldSize.y) / 5)
                         {
                             devoIgnorar = true;
@@ -280,7 +287,7 @@ public class WorldGridScript : MonoBehaviour
 
                     if (!devoIgnorar)
                     {
-                        _rio.Add(d * (int)worldSize.x + i);
+                        _rio.Add(d * worldSize.x + i);
                     }
 
                     continue;
@@ -290,29 +297,29 @@ public class WorldGridScript : MonoBehaviour
                 if (0.20f < _randomValue && _randomValue < 0.20f + chanceBiomas)
                 {
                     Debug.Log("Added Bioma");
-                    biomas.Add(d * (int)worldSize.x + i);
-                    _world[d * (int)worldSize.x + i] = 1;
+                    biomas.Add(d * worldSize.x + i);
+                    _world[d * worldSize.x + i] = 1 + (int)_random.Next(numBiomas);
                     continue;
                 }
 
                 //verifica se nasce minerio nesse bloco
                 if (0.82f < _randomValue && _randomValue < 0.82f + chanceMinerio)
                 {
-                    _world[d * (int)worldSize.x + i] = 100;
+                    _world[d * worldSize.x + i] = 100 + (int)_random.Next(4);
                     continue;
                 }
 
                 //verifica se nasce uma parede nesse bloco
                 if (0.67f < _randomValue && _randomValue < 0.67f + chanceParede)
                 {
-                    _world[d * (int)worldSize.x + i] = 300;
+                    _world[d * worldSize.x + i] = 300;
                     continue;
                 }
 
                 //verifica se nasce enfeites nesse bloco
                 if (0.43f < _randomValue && _randomValue < 0.43f + chanceFlor)
                 {
-                    _world[d * (int)worldSize.x + i] = 200;
+                    _world[d * worldSize.x + i] = 200;
                     continue;
                 }
             }
@@ -325,37 +332,50 @@ public class WorldGridScript : MonoBehaviour
         {
             for (int d = 0; d < worldSize.y; d++)
             {
-                if (_world[d * (int)worldSize.x + i] == 1001)
+                if (_world[d * worldSize.x + i] == 1001)
                 {
                     for (int j = 0; j < pixelSize; j++)
                     {
                         for (int h = 0; h < pixelSize; h++)
                         {
-                            _worldPixels[d * (int)worldSize.x * pixelSize * pixelSize + i * pixelSize + (h * (int)worldSize.x * pixelSize + j)] =
+                            _worldPixels[d * worldSize.x * pixelSize * pixelSize + i * pixelSize + (h * worldSize.x * pixelSize + j)] =
                             Color.cyan;
                         }
                     }
                     continue;
                 }
-                if (_world[d * (int)worldSize.x + i] >= 1000 && _world[d * (int)worldSize.x + i] < 2000)
+                if (_world[d * worldSize.x + i] >= 1000 && _world[d * worldSize.x + i] < 2000)
                 {
                     for (int j = 0; j < pixelSize; j++)
                     {
                         for (int h = 0; h < pixelSize; h++)
                         {
-                            _worldPixels[d * (int)worldSize.x * pixelSize * pixelSize + i * pixelSize + (h * (int)worldSize.x * pixelSize + j)] =
+                            _worldPixels[d * worldSize.x * pixelSize * pixelSize + i * pixelSize + (h * worldSize.x * pixelSize + j)] =
                             Color.blue;
                         }
                     }
                     continue;
                 }
+                if (_world[d * worldSize.x + i] >= 100 && _world[d * worldSize.x + i] < 200)
+                {
+                    int randoneza = 0 + (int)_random.Next(3);
+                    for (int j = 0; j < pixelSize; j++)
+                    {
+                        for (int h = 0; h < pixelSize; h++)
+                        {
+                            _worldPixels[d * worldSize.x * pixelSize * pixelSize + i * pixelSize + (h * worldSize.x * pixelSize + j)] =
+                            sprites[numBiomas][(_world[d * worldSize.x + i] - 100) * 3 + randoneza][h * pixelSize + j];
+                        }
+                    }
+                }
+
                 //squareBioma guarda a posição do bioma mais proximo do nosso quadrado
                 int squareBioma = biomas[0];
                 foreach (int bioma in biomas)
                 {
-                    if (Vector3.Distance(new Vector3(bioma % (int)worldSize.x, Mathf.Floor(bioma / (int)worldSize.x)),
-                     new Vector3(i, d)) < Vector3.Distance(new Vector3(squareBioma % (int)worldSize.x, Mathf.Floor(squareBioma / (int)worldSize.x)),
-                     new Vector3(i, d))) squareBioma = bioma;
+                    if (Vector3.Distance(new Vector3(bioma % worldSize.x, Mathf.Floor(bioma / worldSize.x)),
+                    new Vector3(i, d)) < Vector3.Distance(new Vector3(squareBioma % worldSize.x, Mathf.Floor(squareBioma / worldSize.x)),
+                    new Vector3(i, d)) + (int)_random.Next(-6, 6)) squareBioma = bioma;
                 }
 
                 getNoise(i, d, squareBioma);
@@ -365,14 +385,19 @@ public class WorldGridScript : MonoBehaviour
 
     void loadSprites()
     {
-        sprites = new Color[numBiomas][][];
+        sprites = new Color[numBiomas + 1][][];
         for (int i = 0; i < numBiomas; i++)
         {
-            sprites[i] = new Color[_sprites.Length][];
-            for (int d = 0; d < _sprites.Length; d++)
+            sprites[i] = new Color[15][];
+            for (int d = 0; d < sprites[i].Length; d++)
             {
-                sprites[i][d] = _sprites[d].texture.GetPixels();
+                sprites[i][d] = _sprites[d + i * 15].texture.GetPixels();
             }
+        }
+        sprites[numBiomas] = new Color[12][];
+        for(int i = 0; i < 12; i++ )
+        {
+            sprites[numBiomas][i] = _extraSprites[i].texture.GetPixels();
         }
     }
 
@@ -383,14 +408,21 @@ public class WorldGridScript : MonoBehaviour
 
         float diggo = Mathf.PerlinNoise(xCoord, yCoord);
 
+        int spriteind = 0 + (int)_random.Next(5);
+        
+
         if (diggo > 0.70f)
         {
             for (int j = 0; j < pixelSize; j++)
             {
                 for (int h = 0; h < pixelSize; h++)
                 {
-                    _worldPixels[d * (int)worldSize.x * pixelSize * pixelSize + i * pixelSize + (h * (int)worldSize.x * pixelSize + j)] =
-                    sprites[_world[squareBioma] - 1][0][h * pixelSize + j];
+                    if (_worldPixels[d * worldSize.x * pixelSize * pixelSize + i * pixelSize + (h * worldSize.x * pixelSize + j)].a == 1f)
+                    {
+                        continue;
+                    }
+                    _worldPixels[d * worldSize.x * pixelSize * pixelSize + i * pixelSize + (h * worldSize.x * pixelSize + j)] =
+                    sprites[_world[squareBioma] - 1][spriteind][h * pixelSize + j];
                 }
             }
         }
@@ -401,8 +433,12 @@ public class WorldGridScript : MonoBehaviour
             {
                 for (int h = 0; h < pixelSize; h++)
                 {
-                    _worldPixels[d * (int)worldSize.x * pixelSize * pixelSize + i * pixelSize + (h * (int)worldSize.x * pixelSize + j)] =
-                    sprites[_world[squareBioma] - 1][1][h * pixelSize + j];
+                    if (_worldPixels[d * worldSize.x * pixelSize * pixelSize + i * pixelSize + (h * worldSize.x * pixelSize + j)].a == 1f)
+                    {
+                        continue;
+                    }
+                    _worldPixels[d * worldSize.x * pixelSize * pixelSize + i * pixelSize + (h * worldSize.x * pixelSize + j)] =
+                    sprites[_world[squareBioma] - 1][spriteind + 5][h * pixelSize + j];
                 }
             }
         }
@@ -413,8 +449,12 @@ public class WorldGridScript : MonoBehaviour
             {
                 for (int h = 0; h < pixelSize; h++)
                 {
-                    _worldPixels[d * (int)worldSize.x * pixelSize * pixelSize + i * pixelSize + (h * (int)worldSize.x * pixelSize + j)] =
-                    sprites[_world[squareBioma] - 1][2][h * pixelSize + j];
+                    if (_worldPixels[d * worldSize.x * pixelSize * pixelSize + i * pixelSize + (h * worldSize.x * pixelSize + j)].a == 1f)
+                    {
+                        continue;
+                    }
+                    _worldPixels[d * worldSize.x * pixelSize * pixelSize + i * pixelSize + (h * worldSize.x * pixelSize + j)] =
+                    sprites[_world[squareBioma] - 1][spriteind + 10][h * pixelSize + j];
                 }
             }
         }
@@ -424,8 +464,12 @@ public class WorldGridScript : MonoBehaviour
             {
                 for (int h = 0; h < pixelSize; h++)
                 {
-                    _worldPixels[d * (int)worldSize.x * pixelSize * pixelSize + i * pixelSize + (h * (int)worldSize.x * pixelSize + j)] =
-                    sprites[_world[squareBioma] - 1][3][h * pixelSize + j];
+                    if (_worldPixels[d * worldSize.x * pixelSize * pixelSize + i * pixelSize + (h * worldSize.x * pixelSize + j)].a == 1f)
+                    {
+                        continue;
+                    }
+                    _worldPixels[d * worldSize.x * pixelSize * pixelSize + i * pixelSize + (h * worldSize.x * pixelSize + j)] =
+                    sprites[_world[squareBioma] - 1][spriteind][h * pixelSize + j];
                 }
             }
         }
@@ -437,7 +481,7 @@ public class WorldGridScript : MonoBehaviour
         //adcionamos os pontos onde o rio vai começar e acabar
         float _randomValue = 0;
 
-        for (int i = 1; i < (int)worldSize.x - 1; i++)
+        for (int i = 1; i < worldSize.x - 1; i++)
         {
             if (_rio.Count >= 2) { return; }
 
@@ -447,13 +491,13 @@ public class WorldGridScript : MonoBehaviour
             {
                 //se o primeiro ponto tiver nascido e este estiver muito perto não vamos ignorar
                 if(_rio.Count > 0)
-                    if (Vector3.Distance(new Vector3(_rio[0] % (int)worldSize.x, Mathf.Floor(_rio[0] / (int)worldSize.x)),
-                 new Vector3(i % (int)worldSize.x, Mathf.Floor(i / (int)worldSize.x))) < (worldSize.x + worldSize.y) / 2) continue;
+                    if (Vector3.Distance(new Vector3(_rio[0] % worldSize.x, Mathf.Floor(_rio[0] / worldSize.x)),
+                 new Vector3(i % worldSize.x, Mathf.Floor(i / worldSize.x))) < (worldSize.x + worldSize.y) / 2) continue;
 
                 _rio.Add(i);
             }
         }
-        for (int i = 1; i < (int)worldSize.y - 1; i++)
+        for (int i = 1; i < worldSize.y - 1; i++)
         {
             if (_rio.Count >= 2) { return; }
 
@@ -463,13 +507,13 @@ public class WorldGridScript : MonoBehaviour
             {
                 //se o primeiro ponto tiver nascido e este estiver muito perto não vamos ignorar
                 if(_rio.Count > 0)
-                    if (Vector3.Distance(new Vector3(_rio[0] % (int)worldSize.x, Mathf.Floor(_rio[0] / (int)worldSize.x)),
-                 new Vector3((i * (int)worldSize.y) % (int)worldSize.x, Mathf.Floor((i * (int)worldSize.y) / (int)worldSize.x))) < (worldSize.x + worldSize.y) / 2) continue;
+                    if (Vector3.Distance(new Vector3(_rio[0] % worldSize.x, Mathf.Floor(_rio[0] / worldSize.x)),
+                 new Vector3((i * worldSize.y) % worldSize.x, Mathf.Floor((i * worldSize.y) / worldSize.x))) < (worldSize.x + worldSize.y) / 2) continue;
 
-                _rio.Add(i * (int)worldSize.x);
+                _rio.Add(i * worldSize.x);
             }
         }
-        for (int i = 1; i < (int)worldSize.y - 1; i++)
+        for (int i = 1; i < worldSize.y - 1; i++)
         {
             if (_rio.Count >= 2) { return; }
 
@@ -479,13 +523,13 @@ public class WorldGridScript : MonoBehaviour
             {
                 //se o primeiro ponto tiver nascido e este estiver muito perto não vamos ignorar
                 if(_rio.Count > 0)
-                    if (Vector3.Distance(new Vector3(_rio[0] % (int)worldSize.x, Mathf.Floor(_rio[0] / (int)worldSize.x)),
-                 new Vector3(((i + 1) * (int)worldSize.y - 1) % (int)worldSize.x, Mathf.Floor(i * (int)worldSize.y / (int)worldSize.x))) < (worldSize.x + worldSize.y) / 2) continue;
+                    if (Vector3.Distance(new Vector3(_rio[0] % worldSize.x, Mathf.Floor(_rio[0] / worldSize.x)),
+                 new Vector3(((i + 1) * worldSize.y - 1) % worldSize.x, Mathf.Floor(i * worldSize.y / worldSize.x))) < (worldSize.x + worldSize.y) / 2) continue;
 
-                _rio.Add(((i + 1) * (int)worldSize.x - 1));
+                _rio.Add(((i + 1) * worldSize.x - 1));
             }
         }
-        for (int i = 1; i < (int)worldSize.x - 1; i++)
+        for (int i = 1; i < worldSize.x - 1; i++)
         {
             if (_rio.Count >= 2) { return; }
 
@@ -495,10 +539,10 @@ public class WorldGridScript : MonoBehaviour
             {
                 //se o primeiro ponto tiver nascido e este estiver muito perto não vamos ignorar
                 if(_rio.Count > 0)
-                    if (Vector3.Distance(new Vector3(_rio[0] % (int)worldSize.x, Mathf.Floor(_rio[0] / (int)worldSize.x)),
-                 new Vector3((i + ((int)worldSize.x - 1) * (int)worldSize.y) % (int)worldSize.x, Mathf.Floor((i + ((int)worldSize.x - 1) * (int)worldSize.y) / (int)worldSize.x))) < (worldSize.x + worldSize.y) / 2) continue;
+                    if (Vector3.Distance(new Vector3(_rio[0] % worldSize.x, Mathf.Floor(_rio[0] / worldSize.x)),
+                 new Vector3((i + (worldSize.x - 1) * worldSize.y) % worldSize.x, Mathf.Floor((i + (worldSize.x - 1) * worldSize.y) / worldSize.x))) < (worldSize.x + worldSize.y) / 2) continue;
 
-                _rio.Add((i + ((int)worldSize.x - 1) * (int)worldSize.y));
+                _rio.Add((i + (worldSize.x - 1) * worldSize.y));
             }
         }
 
@@ -540,25 +584,25 @@ public class WorldGridScript : MonoBehaviour
 
 
 /*
-                if (_world[d * (int)worldSize.x + i] < 100)
+                if (_world[d * worldSize.x + i] < 100)
                 {
-                    _worldPixels[d * (int)worldSize.x + i] = Color.black;
+                    _worldPixels[d * worldSize.x + i] = Color.black;
                 }
                 else
-                if (_world[d * (int)worldSize.x + i] < 200)
+                if (_world[d * worldSize.x + i] < 200)
                 {
-                    _worldPixels[d * (int)worldSize.x + i] = Color.green;
+                    _worldPixels[d * worldSize.x + i] = Color.green;
                 }
                 else
-                if (_world[d * (int)worldSize.x + i] < 300)
+                if (_world[d * worldSize.x + i] < 300)
                 {
-                    _worldPixels[d * (int)worldSize.x + i] = Color.cyan;
+                    _worldPixels[d * worldSize.x + i] = Color.cyan;
                 }
                 else
-                if (_world[d * (int)worldSize.x + i] < 400)
+                if (_world[d * worldSize.x + i] < 400)
                 {
-                    _worldPixels[d * (int)worldSize.x + i] = Color.yellow;
+                    _worldPixels[d * worldSize.x + i] = Color.yellow;
                 }
 
-                Debug.Log(_world[d * (int)worldSize.x + i]);
+                Debug.Log(_world[d * worldSize.x + i]);
                 */

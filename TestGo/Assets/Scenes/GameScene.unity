@@ -306,14 +306,68 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _sprites:
-  - {fileID: 21300000, guid: 1af4e8a2796a2db40b9796b7ad1ef1a6, type: 3}
-  - {fileID: 21300000, guid: 3bd386f0c788a8d469bf47ed6b5ef065, type: 3}
-  - {fileID: 21300000, guid: 233c69a126e357e4ea65d7c350bf6357, type: 3}
-  - {fileID: 21300000, guid: c63be5d679dbdb240b44b9fd05cc795c, type: 3}
+  - {fileID: 21300000, guid: e14d563de80eb5944b6349ad002b0a58, type: 3}
+  - {fileID: 21300000, guid: e14d563de80eb5944b6349ad002b0a58, type: 3}
+  - {fileID: 21300000, guid: e14d563de80eb5944b6349ad002b0a58, type: 3}
+  - {fileID: 21300000, guid: e14d563de80eb5944b6349ad002b0a58, type: 3}
+  - {fileID: 21300000, guid: e14d563de80eb5944b6349ad002b0a58, type: 3}
+  - {fileID: 21300000, guid: 6b70435228aae044593142126dc8428c, type: 3}
+  - {fileID: 21300000, guid: 6b70435228aae044593142126dc8428c, type: 3}
+  - {fileID: 21300000, guid: 6b70435228aae044593142126dc8428c, type: 3}
+  - {fileID: 21300000, guid: 6b70435228aae044593142126dc8428c, type: 3}
+  - {fileID: 21300000, guid: 6b70435228aae044593142126dc8428c, type: 3}
+  - {fileID: 21300000, guid: 4d099d85843bb164d835c6b29ee01d37, type: 3}
+  - {fileID: 21300000, guid: 4d099d85843bb164d835c6b29ee01d37, type: 3}
+  - {fileID: 21300000, guid: 4d099d85843bb164d835c6b29ee01d37, type: 3}
+  - {fileID: 21300000, guid: 4d099d85843bb164d835c6b29ee01d37, type: 3}
+  - {fileID: 21300000, guid: 4d099d85843bb164d835c6b29ee01d37, type: 3}
+  - {fileID: 21300000, guid: 2b8287290746d26489a98c3fa4c22ca2, type: 3}
+  - {fileID: 21300000, guid: ceb1a8a2d70ad1c4282f98d7d2bb2234, type: 3}
+  - {fileID: 21300000, guid: c1379827ee75c2e4ab122c18d5cb95bf, type: 3}
+  - {fileID: 21300000, guid: 5b7729d8ca3e7b247857b20116cb2a94, type: 3}
+  - {fileID: 21300000, guid: 2aca5f01a9e081a42b5cf800a4ecfd16, type: 3}
+  - {fileID: 21300000, guid: fae6af369fc13134b8fd4721ccc2c3c4, type: 3}
+  - {fileID: 21300000, guid: c0dc80daec4fb9a4d81864469d10da24, type: 3}
+  - {fileID: 21300000, guid: 5787d2bd6b0d04545b34478f2d2a8c5a, type: 3}
+  - {fileID: 21300000, guid: 16db0495634dcb147bfe5810af1b1fa7, type: 3}
+  - {fileID: 21300000, guid: 4a60dcfc80bb4c04d973e110e26ec145, type: 3}
+  - {fileID: 21300000, guid: 9ce08bbfb31613c4c9a128adc686b763, type: 3}
+  - {fileID: 21300000, guid: cefe92ad06d4377428464f98192de61f, type: 3}
+  - {fileID: 21300000, guid: ffea73e65b119fb4b8fcc98e5c9eac7b, type: 3}
+  - {fileID: 21300000, guid: cd63a98e1600c1747b185dece586740c, type: 3}
+  - {fileID: 21300000, guid: bf4ab093c198f2845b57c9633b2e185d, type: 3}
+  - {fileID: 21300000, guid: 5129085c449fa7a4f97e0850ec541366, type: 3}
+  - {fileID: 21300000, guid: 71265beb873c0a9488a11e906d38c005, type: 3}
+  - {fileID: 21300000, guid: ac9e3059327f7f24fa212fbd3fd6e723, type: 3}
+  - {fileID: 21300000, guid: ac9e3059327f7f24fa212fbd3fd6e723, type: 3}
+  - {fileID: 21300000, guid: 069f01da1e60274428bc90e77cac2234, type: 3}
+  - {fileID: 21300000, guid: 33f26237a1e7ec949a9798b51cf8395b, type: 3}
+  - {fileID: 21300000, guid: 33f26237a1e7ec949a9798b51cf8395b, type: 3}
+  - {fileID: 21300000, guid: 33f26237a1e7ec949a9798b51cf8395b, type: 3}
+  - {fileID: 21300000, guid: 33f26237a1e7ec949a9798b51cf8395b, type: 3}
+  - {fileID: 21300000, guid: 33f26237a1e7ec949a9798b51cf8395b, type: 3}
+  - {fileID: 21300000, guid: 2b460f1604e16cd45b71c0cf6f40cd50, type: 3}
+  - {fileID: 21300000, guid: 8a5e53539ca90e14bae1dff991af2806, type: 3}
+  - {fileID: 21300000, guid: 243021071b51ad74ba0bffcbfca36550, type: 3}
+  - {fileID: 21300000, guid: 813a65180009cfb4d80a5c10f567c3c4, type: 3}
+  - {fileID: 21300000, guid: bfb99897f95e26648afead5d4dde7a28, type: 3}
+  _extraSprites:
+  - {fileID: 21300000, guid: 1e0232e9ae9a90d43989de2bf6c54d66, type: 3}
+  - {fileID: 21300000, guid: 316524713053d2e47af7686586f46d78, type: 3}
+  - {fileID: 21300000, guid: b1fb8af30ea67de48b5abb603adb7251, type: 3}
+  - {fileID: 21300000, guid: 20336b65256d7694aad90d655897c5d2, type: 3}
+  - {fileID: 21300000, guid: a2e17c86d30ecac479fe591cc4faadff, type: 3}
+  - {fileID: 21300000, guid: 0f158f1bf864a504c889b3fd22b4016c, type: 3}
+  - {fileID: 21300000, guid: 89d9cfbf14fbc0142b42ca33a2f0c5e0, type: 3}
+  - {fileID: 21300000, guid: 8deecd8808deef84f97f60989454dd7e, type: 3}
+  - {fileID: 21300000, guid: ea1e8ee9f038c664e8d0d1624e54f939, type: 3}
+  - {fileID: 21300000, guid: 9796fbbd98784b64d9f1c647fe10a101, type: 3}
+  - {fileID: 21300000, guid: 8f36a9626e7741a4c81c229299b77f0b, type: 3}
+  - {fileID: 21300000, guid: 1e7689eaded54a7438f08a1784840d74, type: 3}
   rioExist: 1
-  numBiomas: 1
-  chanceBiomas: 3
-  chanceMinerio: 30
+  numBiomas: 3
+  chanceBiomas: 5
+  chanceMinerio: 100
   chanceParede: 15
   chanceFlor: 60
   chanceRio: 140
