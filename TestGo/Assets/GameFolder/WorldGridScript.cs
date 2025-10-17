@@ -30,6 +30,7 @@ public class WorldGridScript : MonoBehaviour
     [SerializeField] private int pixelSize;
     private List<int> biomas;
     private List<int> _rio;
+    private List<int> _elements;
     private int[] _world;
     private Color[] _worldPixels;
     private System.Random _random = new System.Random();
@@ -64,6 +65,7 @@ public class WorldGridScript : MonoBehaviour
         _world = new int[worldSize.x * worldSize.y];
         _worldPixels = new Color[worldSize.x * worldSize.y * pixelSize * pixelSize];
         biomas = new List<int>();
+        _elements = new List<int>();
         _rio = null;
         //Debug.Log(_rio.Count);
         //assim eu posso colocar um valor simples para cada chance (ex: chanceBioma = 3 media de 3 biomas por mapa)
@@ -167,13 +169,14 @@ public class WorldGridScript : MonoBehaviour
 
     void GenerateRessources()
     {
-          float _randomValue = 0;
         int maxCluster = 9;
+        float _randomValue = 0;
+
         for (int i = 0; i < worldSize.x; i++)
         {
             for (int d = 0; d < worldSize.y; d++)
             {
-                if(_world[d * worldSize.x + i] < 100)
+                if (_world[d * worldSize.x + i] < 100)
                 {
                     continue;
                 }
@@ -186,31 +189,34 @@ public class WorldGridScript : MonoBehaviour
                             continue;
                         }
 
-                        _randomValue = (float)_random.NextDouble();
-
                         //pra fazer o rio based
                         if (_world[d * worldSize.x + i] == 1000)
                         {
-                            if(_world[(d + (k - ((maxCluster-1)/2))) * worldSize.x + i + (j - ((maxCluster-1)/2))] == 1000) continue;
-                            _world[(d + (k - ((maxCluster-1)/2))) * worldSize.x + i + (j - ((maxCluster-1)/2))] = 1001;
-                        }
-
-                        //pra dar cluster effect nos minerios, flores e paredes
-                        if (_world[d * worldSize.x + i] >= 300)
-                        {
-                            
-                        }
-                        else
-                        if (_world[d * worldSize.x + i] >= 200)
-                        {
-
-                        }
-                        else
-                        if (_world[d * worldSize.x + i] >= 100)
-                        {
-
+                            if (_world[(d + (k - ((maxCluster - 1) / 2))) * worldSize.x + i + (j - ((maxCluster - 1) / 2))] == 1000) continue;
+                            _world[(d + (k - ((maxCluster - 1) / 2))) * worldSize.x + i + (j - ((maxCluster - 1) / 2))] = 1001;
                         }
                     }
+                }
+            }
+        }
+        
+
+        for (int i = 0; i < _elements.Count - 1; i++)
+        {
+            if(_world[_elements[i]] >= 1000)
+            {
+                continue;
+            }
+            for (int j = 0; j < maxCluster; j++)
+            {
+                for (int k = 0; k < maxCluster; k++)
+                {
+                    if (_elements[i] + (k - ((maxCluster - 1) / 2)) * worldSize.x + (j - ((maxCluster - 1) / 2)) < 0 || (_elements[i] + (k - ((maxCluster - 1) / 2)) * worldSize.x + (j - ((maxCluster - 1) / 2)) >= worldSize.x * worldSize.y))
+                    {
+                        continue;
+                    }
+                    
+                    _world[_elements[i] + (k - ((maxCluster - 1) / 2)) * worldSize.x + (j - ((maxCluster - 1) / 2))] = _world[_elements[i]];
                 }
             }
         }
@@ -306,6 +312,7 @@ public class WorldGridScript : MonoBehaviour
                 if (0.82f < _randomValue && _randomValue < 0.82f + chanceMinerio)
                 {
                     _world[d * worldSize.x + i] = 100 + (int)_random.Next(4);
+                    _elements.Add(d * worldSize.x + i);
                     continue;
                 }
 
@@ -313,6 +320,7 @@ public class WorldGridScript : MonoBehaviour
                 if (0.67f < _randomValue && _randomValue < 0.67f + chanceParede)
                 {
                     _world[d * worldSize.x + i] = 300;
+                    _elements.Add(d * worldSize.x + i);
                     continue;
                 }
 
@@ -320,6 +328,7 @@ public class WorldGridScript : MonoBehaviour
                 if (0.43f < _randomValue && _randomValue < 0.43f + chanceFlor)
                 {
                     _world[d * worldSize.x + i] = 200;
+                    _elements.Add(d * worldSize.x + i);
                     continue;
                 }
             }
